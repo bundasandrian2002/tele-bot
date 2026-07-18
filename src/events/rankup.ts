@@ -114,7 +114,7 @@ export async function execute({ api, event }: EventExecute) {
     // sanitizer's span parser doesn't handle a [text](url) link nested
     // inside *bold*.
     const mention = `[${displayName}](tg://user?id=${user.id})`;
-    const rewardLine = rewardCoins > 0 ? ` Earned *${rewardCoins}* point's.` : "";
+    const rewardLine = rewardCoins > 0 ? ` Earned *${rewardCoins}* coins 🪙` : "";
     const customMessage = reward?.message ? `\n\n${reward.message}` : "";
 
     await api.sendPhoto(

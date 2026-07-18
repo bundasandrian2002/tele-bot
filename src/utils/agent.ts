@@ -129,6 +129,7 @@ export async function runAgent(
   bot: TelegramBot,
   message: Message,
   chatbotConfig: ChatbotConfig,
+  userContext?: string,
 ): Promise<string> {
   const groqApiKey = process.env.GROQ_API_KEY;
   if (!groqApiKey) {
@@ -169,7 +170,15 @@ export async function runAgent(
     .replace("{{USER_NAME}}", userName)
     .replace("{{COMMAND_PREFIX}}", getPrefix(chatbotConfig))
     .replace("{{USER_ROLE}}", userRoleLabel)
-    .replace("{{AVAILABLE_COMMANDS}}", availableCommands);
+    .replace("{{AVAILABLE_COMMANDS}}", availableCommands)
+    // Recognition context — who this user is on record as (level, coins,
+    // rank, etc.), built by the caller (ai.ts) from the bot's database.
+    // Omitted entirely rather than left as a blank line when there's
+    // nothing to say (e.g. the DB is unreachable).
+    .replace(
+      "{{USER_CONTEXT}}",
+      userContext ? `User profile: ${userContext}` : "",
+    );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any[] = [
