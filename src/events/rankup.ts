@@ -114,14 +114,14 @@ export async function execute({ api, event }: EventExecute) {
     // sanitizer's span parser doesn't handle a [text](url) link nested
     // inside *bold*.
     const mention = `[${displayName}](tg://user?id=${user.id})`;
-    const rewardLine = rewardCoins > 0 ? ` Earned *${rewardCoins}* coins 🪙` : "";
+    const rewardLine = rewardPoints > 0 ? ` Earned *${rewardPoins}* point's.` : "";
     const customMessage = reward?.message ? `\n\n${reward.message}` : "";
 
     await api.sendPhoto(
       event.chat.id,
       card,
       {
-        caption: `🎉 ${mention} just reached *Level ${newLevel}*!${rewardLine}${customMessage}`,
+        caption: `🎉 Congratulations ${mention} just reached *Level ${newLevel}*!${rewardLine}${customMessage}`,
       },
       { filename: "rankup.png", contentType: "image/png" },
     );
