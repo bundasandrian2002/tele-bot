@@ -20,10 +20,11 @@ if (!connectionString) {
 
 export const pool = new Pool({
   connectionString,
-  // Neon requires TLS. rejectUnauthorized: false avoids CA-bundle mismatches
-  // in some hosting environments; Neon's endpoint is only ever reached over
-  // this driver-negotiated TLS connection either way.
-  ssl: { rejectUnauthorized: false },
+  // SSL is driven entirely by `?sslmode=require` in DATABASE_URL (see
+  // .env.example) rather than an explicit `ssl` option here — passing
+  // both at once is ambiguous to `pg` (which config wins?) and triggers
+  // its "If you want the current behavior, explicitly use
+  // sslmode=verify-full" warning. One source of truth avoids that.
   max: 10,
 });
 
