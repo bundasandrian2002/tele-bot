@@ -6,13 +6,17 @@ import {
   addXp,
   addBalance,
   getLevelReward,
+  getUserRank,
 } from "@/lib/db";
+import { xpProgress } from "@/lib/leveling";
+import { generateRankUpCard } from "@/lib/rankUpCard";
+import { getAvatarUrl } from "@/lib/getAvatarUrl";
 
 export const config: EventConfig = {
   name: "rankup",
   description:
     "Awards XP for group activity, keeps user/group/membership rows in sync, " +
-    "and automatically announces + rewards a member whenever their level goes up.",
+    "and automatically announces + rewards a member with a rank-up card whenever their level goes up.",
   creator: "AjiroDesu",
   // Passive watcher, same shape as autokick/botname — every ordinary group
   // message is a chance to gain XP, so this binds to "message" rather than
@@ -69,7 +73,7 @@ export async function execute({ api, event }: EventExecute) {
     lastXpAt.set(key, now);
 
     const amount = Math.floor(Math.random() * (XP_MAX - XP_MIN + 1)) + XP_MIN;
-    const { leveledUp, newLevel } = await addXp(user.id, event.chat.id, amount);
+    const { leveledUp, newLevel, xp } = await addXp(user.id, event.chat.id, amount);
     if (!leveledUp) return;
 
     // Rank-up logic: look up a custom reward for this level, falling back
@@ -83,10 +87,29 @@ export async function execute({ api, event }: EventExecute) {
       });
     }
 
-    // Rank-up response: announce it in the group.
+    const [rank, avatarUrl] = await Promise.all([
+      getUserRank(user.id, event.chat.id),
+      getAvatarUrl(api, user.id),
+    ]);
+
     const displayName = user.last_name
       ? `${user.first_name} ${user.last_name}`
       : user.first_name;
+
+    // Progress within the new level, e.g. "1,240 / 5,100 XP".
+    const { currentLevelXp, neededForNextLevel } = xpProgress(xp, newLevel);
+    const xpText = `${currentLevelXp.toLocaleString()} / ${neededForNextLevel.toLocaleString()} XP`;
+
+    const card = await generateRankUpCard({
+      username: displayName,
+      avatarUrl,
+      level: newLevel,
+      xpText,
+      rank,
+    });
+
+    // Rank-up response: the card carries the level transition, so the
+    // caption stays short — just the mention and the coin reward.
     // Kept outside the *bold* span, same reasoning as join.ts — the
     // sanitizer's span parser doesn't handle a [text](url) link nested
     // inside *bold*.
@@ -94,10 +117,13 @@ export async function execute({ api, event }: EventExecute) {
     const rewardLine = rewardCoins > 0 ? ` Earned *${rewardCoins}* coins 🪙` : "";
     const customMessage = reward?.message ? `\n\n${reward.message}` : "";
 
-    await api.sendMessage(
+    await api.sendPhoto(
       event.chat.id,
-      `🎉 *Level Up!*\n\n` +
-        `${mention} just reached *Level ${newLevel}*!${rewardLine}${customMessage}`,
+      card,
+      {
+        caption: `🎉 ${mention} just reached *Level ${newLevel}*!${rewardLine}${customMessage}`,
+      },
+      { filename: "rankup.png", contentType: "image/png" },
     );
   } catch (error) {
     console.error("rankup event error:", error);

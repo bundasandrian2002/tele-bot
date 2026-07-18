@@ -202,6 +202,30 @@ export async function getUserLevel(userId: number, groupId: number) {
   };
 }
 
+/**
+ * 1-based leaderboard position within a group, ranked by level then xp
+ * (same ordering as user_levels_group_rank_idx). Returns null if the user
+ * has no row yet — shouldn't happen right after addXp(), but guards
+ * against a race either way.
+ */
+export async function getUserRank(userId: number, groupId: number): Promise<number | null> {
+  const { rows } = await pool.query(
+    `WITH me AS (
+       SELECT level, xp FROM user_levels WHERE user_id = $1 AND group_id = $2
+     )
+     SELECT (count(*) + 1) AS rank
+     FROM user_levels, me
+     WHERE user_levels.group_id = $2
+       AND (
+         user_levels.level > me.level
+         OR (user_levels.level = me.level AND user_levels.xp > me.xp)
+       )`,
+    [userId, groupId],
+  );
+  if (!rows.length) return null;
+  return Number(rows[0].rank);
+}
+
 export type LevelReward = { reward_coins: number; message: string | null };
 
 export async function getLevelReward(level: number): Promise<LevelReward | undefined> {
