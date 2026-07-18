@@ -25,12 +25,29 @@ npm start     # production
 | `GROQ_API_KEY` | Optional | Powers the `/ai` command |
 | `SHOTI_APIKEY` | Optional | Powers `/shoti` and `/ishoti` TikTok commands |
 | `PORT` | Optional | Keep-alive server port (defaults to 3000) |
+| `DATABASE_URL` | ✅ Yes | NeonDB (Postgres) connection string — powers users, groups, balances, XP/levels. See "Database" below. |
 
 See `.env.example` for a template.
+
+## Database
+
+Backed by NeonDB (Postgres). Schema lives in `sql/migrations/`, applied with:
+
+```bash
+npm run db:migrate
+```
+
+Tables: `users`, `groups`, `group_members`, `user_wallets` + `wallet_transactions`
+(coin balance and its audit ledger), `user_levels` (per-group XP/level),
+`level_rewards` (optional per-level custom coin bonus/message). XP is
+awarded and level-ups are detected by `src/events/rankup.ts`, which fires
+on every group message.
 
 ## Project structure
 
 ```
+sql/
+  migrations/     # Postgres schema migrations (run via `npm run db:migrate`)
 src/
   index.ts        # Entry point — wires commands and events
   config.ts       # Bot configuration
@@ -38,6 +55,8 @@ src/
   agent/          # AI agent logic
   commands/       # Bot command handlers
   events/         # Bot event handlers
+  lib/            # DB client, greet card renderer, other shared logic
+  scripts/        # One-off scripts (migration runner)
   types/          # TypeScript type definitions
   utils/          # Shared utilities (wrapper, markdown, etc.)
 ```
