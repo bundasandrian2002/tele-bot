@@ -153,6 +153,11 @@ export async function runAgent(
   const isAdmin = chatbotConfig.admins.includes(message.from?.id ?? -1);
   const userRoleLabel = isAdmin ? "Bot Administrator" : "Regular User";
   const userName = message.from?.first_name || "User";
+  // Needed (alongside userName) to build a tg://user?id= mention link in the
+  // system prompt — a text mention works even for users with no @username,
+  // unlike a bare @handle. Same -1 sentinel as isAdmin above; user-sent
+  // messages always carry `from`, so this only guards the type.
+  const userId = message.from?.id ?? -1;
   // Always identify the agent by the bot's real Telegram first name — no
   // hardcoded/config-driven nickname involved. chatbotConfig.nickname is
   // only a trigger word for the passive nickname event, not the bot's
@@ -167,7 +172,8 @@ export async function runAgent(
     "{{BOT_NAME}}",
     botName || "Bot",
   )
-    .replace("{{USER_NAME}}", userName)
+    .replace(/{{USER_NAME}}/g, userName)
+    .replace(/{{USER_ID}}/g, String(userId))
     .replace("{{COMMAND_PREFIX}}", getPrefix(chatbotConfig))
     .replace("{{USER_ROLE}}", userRoleLabel)
     .replace("{{AVAILABLE_COMMANDS}}", availableCommands)
