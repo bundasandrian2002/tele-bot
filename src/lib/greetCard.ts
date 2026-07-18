@@ -12,15 +12,48 @@
  * to pass. Everything else — panel geometry, avatar hex frame, chip/badge
  * drawing, the named-color palette — matches the original exactly.
  */
-import { createCanvas, loadImage, type SKRSContext2D } from "@napi-rs/canvas";
+import { createCanvas, loadImage, GlobalFonts, type SKRSContext2D } from "@napi-rs/canvas";
 import { writeFileSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
 
 type Rgb = [number, number, number];
 type LoadedImage = Awaited<ReturnType<typeof loadImage>>;
 export type GreetEventType = "welcome" | "goodbye";
+
+// @napi-rs/canvas ships with zero fonts and no system-font fallback —
+// ctx.fillText() silently draws nothing instead of throwing when no font
+// is registered. A dev machine with fonts installed hides this; a bare
+// container (Railway's default Node image included) has none, which is
+// exactly why the card rendered but every piece of text was blank.
+//
+// These two .ttf files are bundled directly in assets/fonts/ (Instrument
+// Sans + JetBrains Mono, both SIL Open Font License — free to redistribute)
+// so text always renders regardless of the host, with no manual download
+// step required.
+const FONTS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../assets/fonts");
+const SANS_FONT = "Greet Sans";
+const MONO_FONT = "Greet Mono";
+let fontsRegistered = false;
+
+function ensureFontsRegistered(): void {
+  if (fontsRegistered) return;
+  fontsRegistered = true;
+  const files: [string, string][] = [
+    ["InstrumentSans-Regular.ttf", SANS_FONT],
+    ["InstrumentSans-Bold.ttf", SANS_FONT],
+    ["JetBrainsMono-Regular.ttf", MONO_FONT],
+  ];
+  for (const [file, family] of files) {
+    try {
+      GlobalFonts.registerFromPath(path.join(FONTS_DIR, file), family);
+    } catch (error) {
+      console.error(`greetCard: failed to register font ${file} — text will render blank:`, error);
+    }
+  }
+}
 
 export interface GreetCardOptions {
   type: GreetEventType;
@@ -145,7 +178,7 @@ async function loadRemoteImage(source: string, prefix: string): Promise<LoadedIm
       "jpg";
     const buf = Buffer.from(await res.arrayBuffer());
 
-    const tmp = join(tmpdir(), `${prefix}_${randomBytes(8).toString("hex")}.${ext}`);
+    const tmp = path.join(tmpdir(), `${prefix}_${randomBytes(8).toString("hex")}.${ext}`);
     writeFileSync(tmp, buf);
     try {
       return await loadImage(tmp);
@@ -421,11 +454,11 @@ function fitText(ctx: SKRSContext2D, text: string, x: number, y: number, maxWidt
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   while (size > minSize) {
-    ctx.font = `${weight} ${size}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+    ctx.font = `${weight} ${size}px "Greet Sans", sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) break;
     size -= 1;
   }
-  ctx.font = `${weight} ${size}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+  ctx.font = `${weight} ${size}px "Greet Sans", sans-serif`;
   let out = text;
   while (ctx.measureText(out).width > maxWidth && out.length > 1) {
     out = out.slice(0, -1);
@@ -445,7 +478,7 @@ function fitText(ctx: SKRSContext2D, text: string, x: number, y: number, maxWidt
 function drawChip(ctx: SKRSContext2D, x: number, y: number, text: string, opts: { fill: string; textColor: string; fontSize: number; weight: string; height: number; border?: string }): void {
   const paddingX = 18;
   const h = opts.height;
-  const font = `${opts.weight} ${opts.fontSize}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+  const font = `${opts.weight} ${opts.fontSize}px "Greet Sans", sans-serif`;
   ctx.save();
   ctx.font = font;
   const textW = ctx.measureText(text).width;
@@ -478,6 +511,8 @@ function drawChip(ctx: SKRSContext2D, x: number, y: number, text: string, opts: 
 
 /** Renders the card and returns it as a PNG buffer. */
 export async function generateGreetCard(opts: GreetCardOptions): Promise<Buffer> {
+  ensureFontsRegistered();
+
   const defaultColor = opts.type === "welcome" ? "Green" : "Red";
   const color = resolveColor(opts.color, defaultColor);
 
@@ -505,7 +540,7 @@ export async function generateGreetCard(opts: GreetCardOptions): Promise<Buffer>
   const statusLabel = opts.type === "welcome" ? "NEW MEMBER" : "MEMBER LEFT";
   let chipFont = CHIP_FONT;
   const measureChipWidth = (fs: number): number => {
-    ctx.font = `700 ${fs}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+    ctx.font = `700 ${fs}px "Greet Sans", sans-serif`;
     return ctx.measureText(statusLabel).width + 36;
   };
   while (chipFont > CHIP_FONT_MIN && measureChipWidth(chipFont) > maxContentW) chipFont -= 1;
@@ -524,7 +559,7 @@ export async function generateGreetCard(opts: GreetCardOptions): Promise<Buffer>
   const readoutY = blockTop + relReadoutBaseline;
 
   ctx.save();
-  ctx.font = `700 ${EYEBROW_FONT_SIZE}px "Courier New", monospace`;
+  ctx.font = `700 ${EYEBROW_FONT_SIZE}px "Greet Mono", monospace`;
   ctx.fillStyle = rgba(color, 1);
   ctx.shadowColor = rgba(color, 0.7);
   ctx.shadowBlur = EYEBROW_SHADOW_BLUR;
@@ -558,12 +593,12 @@ export async function generateGreetCard(opts: GreetCardOptions): Promise<Buffer>
   if (opts.memberCount != null) {
     const chipLabel = `#${opts.memberCount}`;
     let badgeFont = CHIP_FONT;
-    ctx.font = `700 ${badgeFont}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+    ctx.font = `700 ${badgeFont}px "Greet Sans", sans-serif`;
     let badgeChipW = ctx.measureText(chipLabel).width + ctx.measureText("MEMBERS").width + BADGE_MEASURE_PAD;
     const maxBadgeChipW = panelW - BADGE_MAX_WIDTH_PANEL_PAD - (cx + r + BADGE_MAX_WIDTH_AVATAR_GAP - panelX);
     while (badgeFont > CHIP_FONT_MIN && badgeChipW > maxBadgeChipW) {
       badgeFont -= 1;
-      ctx.font = `700 ${badgeFont}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+      ctx.font = `700 ${badgeFont}px "Greet Sans", sans-serif`;
       badgeChipW = ctx.measureText(chipLabel).width + ctx.measureText("MEMBERS").width + BADGE_MEASURE_PAD;
     }
     const chipW = Math.min(badgeChipW, maxBadgeChipW);
@@ -601,12 +636,12 @@ export async function generateGreetCard(opts: GreetCardOptions): Promise<Buffer>
     ctx.restore();
 
     ctx.save();
-    ctx.font = `600 ${BADGE_LABEL_FONT_SIZE}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+    ctx.font = `600 ${BADGE_LABEL_FONT_SIZE}px "Greet Sans", sans-serif`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillText("MEMBERS", chipX + BADGE_LABEL_OFFSET_X, chipY + chipHgt / 2 + BADGE_LABEL_OFFSET_Y);
-    ctx.font = `700 ${badgeFont}px -apple-system, "SF Pro Display", "Roboto", sans-serif`;
+    ctx.font = `700 ${badgeFont}px "Greet Sans", sans-serif`;
     ctx.fillStyle = "#f5f6f8";
     ctx.fillText(chipLabel, chipX + BADGE_VALUE_OFFSET_X, chipY + chipHgt / 2 + BADGE_VALUE_OFFSET_Y);
     ctx.restore();
