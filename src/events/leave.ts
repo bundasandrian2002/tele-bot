@@ -1,9 +1,11 @@
 import { EventConfig, EventExecute } from "@/types";
+import { generateGreetCard } from "@/lib/greetCard";
+import { getAvatarUrl } from "@/lib/getAvatarUrl";
 
 export const config: EventConfig = {
   name: "leave",
   description:
-    "Sends a goodbye message when a member leaves, or is removed/kicked from the group.",
+    "Sends a goodbye card when a member leaves, or is removed/kicked from the group.",
   creator: "AjiroDesu",
   // Fires when a single member leaves on their own OR is removed/kicked
   // by an admin — Telegram reports both through the same field.
@@ -32,11 +34,30 @@ export async function execute({ api, event }: EventExecute) {
       ? `${event.from.first_name} ${event.from.last_name}`
       : event.from?.first_name;
 
-    const text = wasRemoved
+    const [avatarUrl, memberCount] = await Promise.all([
+      getAvatarUrl(api, member.id),
+      api.getChatMemberCount(event.chat.id).catch(() => null),
+    ]);
+
+    const card = await generateGreetCard({
+      type: "goodbye",
+      username: displayName,
+      avatarUrl,
+      serverName: event.chat.title ?? null,
+      message: wasRemoved ? `Removed by ${remover ?? "an admin"}` : null,
+      memberCount,
+    });
+
+    const caption = wasRemoved
       ? `👋 *${displayName}* was removed from the group by *${remover ?? "an admin"}*.`
       : `👋 *${displayName}* has left the group. Take care!`;
 
-    await api.sendMessage(event.chat.id, text);
+    await api.sendPhoto(
+      event.chat.id,
+      card,
+      { caption },
+      { filename: "goodbye.png", contentType: "image/png" },
+    );
   } catch (error) {
     console.error("leave event error:", error);
   }
