@@ -14,15 +14,25 @@ export const config: Config = {
 /**
  * Registers/refreshes this user in the database (so /ai alone is enough to
  * be "known", even for someone who never triggers rankup.ts by chatting)
- * and builds a short profile string the AI gets told about — level, XP
- * rank, and coin balance when available. Returns undefined (rather than an
- * empty-context string) on any DB hiccup, so a database outage degrades to
- * "the AI just doesn't have profile context this turn" instead of failing
- * the whole command.
+ * and builds a short profile string the AI gets told about — name/id
+ * always, plus level, XP rank, and coin balance when available. Only
+ * returns undefined when there's no Telegram user on the event at all;
+ * each DB lookup (upsert, level/rank, balance) fails independently so a
+ * single outage just omits that one detail instead of losing the user's
+ * identity too.
  */
 async function buildUserContext(event: Execute["event"]): Promise<string | undefined> {
   const user = event.from;
   if (!user) return undefined;
+
+  // Identity always comes from the Telegram update itself, never the DB, so
+  // the AI recognizes *someone* even when every DB call below fails —
+  // "who is this user" and "what do we know about them" are treated as two
+  // separate, independently-failable concerns.
+  const parts: string[] = [
+    user.username ? `@${user.username}` : user.first_name,
+    `Telegram id ${user.id}`,
+  ];
 
   try {
     await upsertUser({
@@ -33,14 +43,13 @@ async function buildUserContext(event: Execute["event"]): Promise<string | undef
       is_bot: user.is_bot,
       language_code: user.language_code,
     });
+  } catch (error) {
+    console.error("ai command: failed to upsert user:", error);
+  }
 
-    const parts: string[] = [
-      user.username ? `@${user.username}` : user.first_name,
-      `Telegram id ${user.id}`,
-    ];
-
-    const isGroup = event.chat.type === "group" || event.chat.type === "supergroup";
-    if (isGroup) {
+  const isGroup = event.chat.type === "group" || event.chat.type === "supergroup";
+  if (isGroup) {
+    try {
       const [{ level, xp }, rank] = await Promise.all([
         getUserLevel(user.id, event.chat.id),
         getUserRank(user.id, event.chat.id),
@@ -50,16 +59,22 @@ async function buildUserContext(event: Execute["event"]): Promise<string | undef
           ? `level ${level} in this group (${xp.toLocaleString()} XP${rank ? `, rank #${rank}` : ""})`
           : "no activity/XP recorded in this group yet",
       );
+    } catch (error) {
+      console.error("ai command: failed to fetch level/rank:", error);
     }
+  }
 
+  try {
     const balance = await getBalance(user.id);
     parts.push(`${balance.toLocaleString()} coins`);
-
-    return parts.join(", ");
   } catch (error) {
-    console.error("ai command: failed to build user context:", error);
-    return undefined;
+    console.error("ai command: failed to fetch balance:", error);
   }
+
+  // Always at least "@handle, Telegram id N" — never undefined once we know
+  // who the user is, so the model is never left with zero recognition of
+  // them just because one DB lookup failed.
+  return parts.join(", ");
 }
 
 export async function execute({ api, event, args, chatbotConfig }: Execute) {
