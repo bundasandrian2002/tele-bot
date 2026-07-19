@@ -7,7 +7,7 @@ export const config: Config = {
   description: "Download a video from TikTok.",
   usage: "/tiktokdl [url]",
   permission: "user",
-  creator: "libyzxy0",
+  creator: "itsunknown",
 };
 
 // NOTE: no `g` flag here. A global regex used with `.test()` keeps its

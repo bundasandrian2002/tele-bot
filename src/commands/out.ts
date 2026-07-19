@@ -5,7 +5,7 @@ export const config: Config = {
   description: "Makes the bot leave the current group.",
   usage: "/out",
   permission: "admin",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 export async function execute({ api, event }: Execute) {

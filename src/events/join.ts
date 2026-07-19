@@ -5,7 +5,7 @@ import { getAvatarUrl } from "@/lib/getAvatarUrl";
 export const config: EventConfig = {
   name: "join",
   description: "Sends a welcome card when a new member joins the group.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // node-telegram-bot-api re-emits certain message subtypes as their own
   // event names — "new_chat_members" fires whenever one or more users
   // are added to the group, so it maps straight onto this event.

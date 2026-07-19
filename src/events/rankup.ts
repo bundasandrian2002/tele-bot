@@ -17,7 +17,7 @@ export const config: EventConfig = {
   description:
     "Awards XP for group activity, keeps user/group/membership rows in sync, " +
     "and automatically announces + rewards a member with a rank-up card whenever their level goes up.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // Passive watcher, same shape as autokick/botname — every ordinary group
   // message is a chance to gain XP, so this binds to "message" rather than
   // a dedicated Telegram event.

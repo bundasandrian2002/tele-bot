@@ -23,7 +23,7 @@ export const config: Config = {
     "Shows the command list, or detailed info about a specific command.",
   usage: "/help [command | page]",
   permission: "user",
-  creator: "libyzxy0",
+  creator: "itsunknown",
 };
 
 // Falls back to the command's own name (e.g. "/example") whenever its

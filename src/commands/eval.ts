@@ -5,7 +5,7 @@ export const config: Config = {
   description: "eval ide.",
   usage: "/eval [code]",
   permission: "admin",
-  creator: "libyzxy0",
+  creator: "itsunknown",
 };
 
 function mapToObj(map: Map<any, any>) {

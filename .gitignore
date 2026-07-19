@@ -1,2 +1,3 @@
 .replit
+src/config.ts
 package-lock.json

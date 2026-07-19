@@ -6,7 +6,7 @@ export const config: EventConfig = {
   name: "leave",
   description:
     "Sends a goodbye card when a member leaves, or is removed/kicked from the group.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // Fires when a single member leaves on their own OR is removed/kicked
   // by an admin — Telegram reports both through the same field.
   trigger: "left_chat_member",

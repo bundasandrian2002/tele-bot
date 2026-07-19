@@ -5,7 +5,7 @@ export const config: Config = {
   description: "Generate a random video from capcut.",
   usage: "/vitaminv2",
   permission: "user",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 const link = [

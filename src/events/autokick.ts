@@ -4,7 +4,7 @@ export const config: EventConfig = {
   name: "autokick",
   description:
     "Automatically kicks a group member who spams 20 messages within a short time window.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // Passive watcher, same shape as autodl — it looks at every ordinary
   // message and tracks send frequency itself rather than binding to a
   // dedicated Telegram event name.

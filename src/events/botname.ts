@@ -6,7 +6,7 @@ export const config: EventConfig = {
   description:
     "Passively triggers the AI agent whenever an ordinary message mentions the bot's " +
     "configured nickname — no /ai prefix needed.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // Passive watcher, same shape as autodl/autokick: looks at every ordinary
   // message and decides for itself whether the nickname was mentioned.
   trigger: "message",

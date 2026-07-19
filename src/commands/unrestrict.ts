@@ -7,7 +7,7 @@ export const config: Config = {
     "Lifts a member's restrictions, restoring their ability to send messages/media. Target them by replying to one of their messages, or by @mentioning them.",
   usage: "/unrestrict (reply to a user) OR /unrestrict @username",
   permission: "admin",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 export async function execute({ api, event }: Execute) {

@@ -6,7 +6,7 @@ export const config: Config = {
   description: "Generate an image from a text prompt.",
   usage: "/imagine [prompt]",
   permission: "user",
-  creator: "itsunknown",
+  creator: "libyzxy0",
 };
 
 interface ImagineResponse {

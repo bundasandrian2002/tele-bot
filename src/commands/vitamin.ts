@@ -6,7 +6,7 @@ export const config: Config = {
   description: "Generate a random cosplay from the archive.",
   usage: "/vitamin",
   permission: "user",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 const REPO_URL = "https://github.com/ajirodesu/cosplay/tree/main/";

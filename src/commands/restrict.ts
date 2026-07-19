@@ -8,7 +8,7 @@ export const config: Config = {
   usage:
     "/restrict (reply to a user) [duration] OR /restrict @username [duration]",
   permission: "admin",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 // Accepts a trailing "<number><unit>" argument, e.g. "10m", "2h", "1d".

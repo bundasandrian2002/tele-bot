@@ -5,7 +5,7 @@ export const config: Config = {
   description: "Show how long the bot has been running and current ping latency.",
   usage: "/uptime",
   permission: "user",
-  creator: "libyzxy0",
+  creator: "itsunknown",
 };
 
 /** Formats a duration in seconds as "Xd Xh Xm Xs", dropping leading zero units. */

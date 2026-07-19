@@ -13,7 +13,7 @@ export const config: EventConfig = {
   name: "autodl",
   description:
     "Auto-detects a pasted Facebook, TikTok, or YouTube video link anywhere in a message and downloads it — no command needed.",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
   // Passive link-paste detector: unlike join/leave (bound to Telegram's
   // own dedicated event names) and unlike commands (gated behind an
   // explicit prefix), autodl watches every ordinary message body and

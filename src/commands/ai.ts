@@ -8,7 +8,7 @@ export const config: Config = {
     "Chat with the AI assistant — it can also run this bot's other commands on your behalf.",
   usage: "/ai [prompt]",
   permission: "user",
-  creator: "AjiroDesu",
+  creator: "itsunknown",
 };
 
 /**
@@ -77,20 +77,6 @@ async function buildUserContext(event: Execute["event"]): Promise<string | undef
   return parts.join(", ");
 }
 
-/**
- * Builds a Telegram text-mention link — `[Name](tg://user?id=N)` — for the
- * invoking user. Addressing by numeric id (rather than `@username`) means
- * it pings the user and renders correctly even when they have no
- * `@username` set. The wrapped `api.sendMessage` runs every outgoing
- * message through MarkdownV2 sanitization automatically, so the display
- * name here doesn't need manual escaping — just return the raw construct.
- */
-function buildMention(user: Execute["event"]["from"]): string {
-  if (!user) return "there";
-  const name = user.first_name || user.username || "there";
-  return `[${name}](tg://user?id=${user.id})`;
-}
-
 export async function execute({ api, event, args, chatbotConfig }: Execute) {
   const prompt = args.join(" ").trim();
   if (!prompt) {
@@ -99,11 +85,6 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
   }
 
   try {
-    // Sent directly by this command — not left to the agent's own judgment —
-    // so every /ai invocation greets the user with a real mention up front,
-    // independent of whatever the agent loop decides to send afterward.
-    await api.sendMessage(event.chat.id, `Hello, ${buildMention(event.from)}!`);
-
     const userContext = await buildUserContext(event);
 
     // runAgent keeps the "typing…" indicator refreshed for its whole turn,

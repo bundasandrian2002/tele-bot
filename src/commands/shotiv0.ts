@@ -7,7 +7,7 @@ export const config: Config = {
   description: "Generate a random video from TikTok.",
   usage: "/shotiv0",
   permission: "user",
-  creator: "libyzxy0",
+  creator: "itsunknown",
 };
 
 interface ShotiV0Response {
