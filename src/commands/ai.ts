@@ -15,7 +15,7 @@ export const config: Config = {
  * Registers/refreshes this user in the database (so /ai alone is enough to
  * be "known", even for someone who never triggers rankup.ts by chatting)
  * and builds a short profile string the AI gets told about — name/id
- * always, plus level, XP rank, and coin balance when available. Only
+ * always, plus level, XP rank, and point balance when available. Only
  * returns undefined when there's no Telegram user on the event at all;
  * each DB lookup (upsert, level/rank, balance) fails independently so a
  * single outage just omits that one detail instead of losing the user's
@@ -66,7 +66,7 @@ async function buildUserContext(event: Execute["event"]): Promise<string | undef
 
   try {
     const balance = await getBalance(user.id);
-    parts.push(`${balance.toLocaleString()} point's.`);
+    parts.push(`${balance.toLocaleString()} points`);
   } catch (error) {
     console.error("ai command: failed to fetch balance:", error);
   }
