@@ -70,7 +70,7 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
   await api.sendMessage(
     event.chat.id,
     next
-      ? "🔒 *Developer Mode Enabled!* \n\nOnly admins can use commands or trigger AI/auto-features now."
+      ? "🔒 *Developer Mode Enabled!* \n\nOnly admins can use commands or trigger AI/auto-features."
       : "🔓 *Developer Mode Disabled!* \n\nEveryone can use the bot.",
   );
 }
