@@ -121,7 +121,7 @@ export async function execute({ api, event }: EventExecute) {
       event.chat.id,
       card,
       {
-        caption: `🎉 Congratulations ${mention} just reached *Level ${newLevel}*!${rewardLine}${customMessage}`,
+        caption: `🎉 Congratulations ${mention}! You reached *Level ${newLevel}*.`,
       },
       { filename: "rankup.png", contentType: "image/png" },
     );
