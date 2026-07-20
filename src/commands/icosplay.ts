@@ -1,9 +1,9 @@
 import { Config, Execute } from "@/types";
 
 export const config: Config = {
-  name: "cosplay",
+  name: "iicosplay",
   description: "Generate a random image.",
-  usage: "/cosplay",
+  usage: "/icosplay",
   permission: "user",
   creator: "itsunknown",
 };
