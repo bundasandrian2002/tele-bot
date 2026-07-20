@@ -143,7 +143,7 @@ const runCommand = async (
       });
       bot.sendMessage(
         message.chat.id,
-        "🔒 *Developer Mode is active.* Only bot admins can use commands right now.",
+        "🔒 *Developer Mode is active!* \n\nOnly bot admins can use commands right now.",
       );
       return;
     }
