@@ -1,7 +1,7 @@
 import { Config, Execute } from "@/types";
 
 export const config: Config = {
-  name: "iicosplay",
+  name: "icosplay",
   description: "Generate a random image.",
   usage: "/icosplay",
   permission: "user",
