@@ -19,8 +19,8 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
     await api.sendMessage(
       event.chat.id,
       chatbotConfig.developerMode
-        ? "🔒 *Developer Mode is currently ON.* Only admins can use the bot."
-        : "🔓 *Developer Mode is currently OFF.* Everyone can use the bot.",
+        ? "🔒 *Developer Mode is currently ON!* Only admins can use the bot."
+        : "🔓 *Developer Mode is currently OFF!* Everyone can use the bot.",
     );
     return;
   }
@@ -70,7 +70,7 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
   await api.sendMessage(
     event.chat.id,
     next
-      ? "🔒 *Developer Mode enabled.* Only admins can use commands or trigger AI/auto-features now."
-      : "🔓 *Developer Mode disabled.* Everyone can use the bot again.",
+      ? "🔒 *Developer Mode Enabled!* \n\nOnly admins can use commands or trigger AI/auto-features now."
+      : "🔓 *Developer Mode Disabled!* \n\nEveryone can use the bot.",
   );
 }
