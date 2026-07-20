@@ -54,7 +54,7 @@ export function inspectCommandConstraints(
  * within AGENT_COMMAND_LIMIT_WINDOW_MS before being blocked. Admins are
  * exempt entirely — see checkAgentCommandRateLimit.
  */
-const AGENT_COMMAND_LIMIT = 3;
+const AGENT_COMMAND_LIMIT = 1;
 const AGENT_COMMAND_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
