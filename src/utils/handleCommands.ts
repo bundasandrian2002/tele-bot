@@ -12,7 +12,7 @@ export const handleCommands = (
     try {
       const prefix = getPrefix(chatbotConfig);
       const text = message?.text?.trim();
-      if (!text?.startsWith(prefix)) return;
+      if (!text?.startsWith(prefix)) return bot.sendMessage(message.chat.id, `Use ${prefix}help.`);
 
       const txt = text.split(/\s+/).filter(Boolean);
       txt[0] = txt[0].split("@")[0].toLowerCase();
