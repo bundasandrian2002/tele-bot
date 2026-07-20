@@ -137,6 +137,22 @@ export async function upsertGroupMember(
   );
 }
 
+export type ActiveGroup = { id: number; title: string };
+
+/**
+ * Every group the bot is still a member of (see upsertGroup /
+ * `is_active`, which flips to false once the bot is removed from a
+ * chat). Used by the AutoGreet scheduler (src/lib/autogreetScheduler.ts)
+ * to broadcast the morning/afternoon/evening/midnight greeting to every
+ * active group at once.
+ */
+export async function getActiveGroups(): Promise<ActiveGroup[]> {
+  const { rows } = await pool.query(
+    `SELECT id, title FROM groups WHERE is_active = TRUE`,
+  );
+  return rows.map((row) => ({ id: Number(row.id), title: row.title as string }));
+}
+
 // ---------------------------------------------------------------------------
 // user_wallets / wallet_transactions
 // ---------------------------------------------------------------------------

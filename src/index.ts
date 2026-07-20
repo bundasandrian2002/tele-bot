@@ -4,6 +4,7 @@ import { wrapBot } from "@/utils/wrapper";
 import { chatbotConfig } from "@/config";
 import { handleCommands } from "@/utils/handleCommands";
 import { handleEvents } from "@/utils/handleEvents";
+import { startAutoGreetScheduler } from "@/lib/autogreetScheduler";
 import { getBotSetting, deleteBotSetting } from "@/lib/db";
 import "@/keep_alive";
 
@@ -46,6 +47,13 @@ const setupChatbot = async () => {
 
   await handleEvents(wrappedBot, chatbotConfig);
   console.log(chalk.cyan.bold("[SYSTEM]: Ready to accept user events!"));
+
+  // AutoGreet's morning/afternoon/evening/midnight broadcast
+  // (src/lib/autogreetScheduler.ts) isn't triggered by an incoming Telegram
+  // update, so handleEvents() above doesn't wire it up — it's started
+  // here instead, once, as its own polling interval.
+  startAutoGreetScheduler(wrappedBot);
+  console.log(chalk.cyan.bold("[SYSTEM]: AutoGreet scheduler started!"));
 
   console.log(
     chalk.cyan.bold("[SYSTEM]: Chatbot Name:") +

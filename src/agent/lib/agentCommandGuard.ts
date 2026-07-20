@@ -54,12 +54,12 @@ export function inspectCommandConstraints(
  * within AGENT_COMMAND_LIMIT_WINDOW_MS before being blocked. Admins are
  * exempt entirely — see checkAgentCommandRateLimit.
  */
-const AGENT_COMMAND_LIMIT = 1;
+const AGENT_COMMAND_LIMIT = 3;
 const AGENT_COMMAND_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
- * In-memory only, same tradeoff as rankup.ts's XP cooldown and
- * autogreet.ts's greet cooldown: per-process, resets on restart, no DB
+ * In-memory only, same tradeoff as rankup.ts's XP cooldown:
+ * per-process, resets on restart, no DB
  * round-trip needed for something this cheap to get slightly wrong.
  * Keyed by user id (not per-chat) — the limit is about the person, not
  * which chat they asked from.

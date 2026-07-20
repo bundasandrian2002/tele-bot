@@ -137,10 +137,7 @@ const runCommand = async (
     // Developer Mode locks the *entire* bot to admins, regardless of the
     // command's own `permission` — checked first so it doesn't matter
     // whether the command below would otherwise be user- or admin-only.
-    if (
-      chatbotConfig.developerMode &&
-      !chatbotConfig.admins.includes(message.from.id)
-    ) {
+    if (chatbotConfig.developerMode && !chatbotConfig.admins.includes(message.from.id)) {
       bot.setMessageReaction(message.chat.id, message.message_id, {
         reaction: [{ type: "emoji", emoji: "🔒" }],
       });

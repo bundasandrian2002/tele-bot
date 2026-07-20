@@ -111,9 +111,9 @@ const runEvent = async (
   }
 
   // Developer Mode silently skips non-admin-triggered "feature" events
-  // (autodl, autogreet, botname/AI, rankup) — no denial message here,
+  // (autodl, botname/AI, rankup) — no denial message here,
   // unlike handleCommands.ts's explicit /command rejection, since firing
-  // one on every stray group message (autogreet's "hi", rankup's passive
+  // one on every stray group message (rankup's passive
   // XP gain) would be far too noisy. Events marked alwaysActive (autokick,
   // join, leave) are exempt and keep running regardless.
   if (
