@@ -11,19 +11,33 @@ export const config: Config = {
   creator: "itsunknown",
 };
 
-export async function execute({ api, event }: Execute) {
+export async function execute({ api, event, chatbotConfig }: Execute) {
   if (!event.from) return false;
 
   // Unlike restrict.ts/kick.ts, no reply/mention isn't an error here — it
   // just means "check my own balance", which is the common case.
   const target = (await resolveTargetUser(api, event)) ?? event.from;
   const isSelf = target.id === event.from.id;
+  const displayName = target.last_name
+    ? `${target.first_name} ${target.last_name}`
+    : target.first_name;
+
+  // Bot admins (chatbotConfig.admins) always read as unlimited — the
+  // underlying user_wallets row is untouched (BIGINT can't hold Infinity
+  // anyway, and nothing currently spends points), this is purely what
+  // /balance reports for them.
+  if (chatbotConfig.admins.includes(target.id)) {
+    await api.sendMessage(
+      event.chat.id,
+      isSelf
+        ? `💰 *Your Balance:* ♾️ (unlimited — admin)`
+        : `💰 *${displayName}'s Balance:* ♾️ (unlimited — admin)`,
+    );
+    return;
+  }
 
   try {
     const balance = await getBalance(target.id);
-    const displayName = target.last_name
-      ? `${target.first_name} ${target.last_name}`
-      : target.first_name;
 
     await api.sendMessage(
       event.chat.id,
