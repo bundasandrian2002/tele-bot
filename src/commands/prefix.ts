@@ -17,7 +17,7 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
       event.chat.id,
       `⚙️ *Current Prefix*\n\n` +
         `The bot's prefix is currently set to: \`${currentPrefix}\`\n\n` +
-        `To change it, use: \`${currentPrefix}prefix <new_prefix>\``,
+        `To change it, use: \`${currentPrefix}prefix [new_prefix]\``,
     );
     return;
   }
