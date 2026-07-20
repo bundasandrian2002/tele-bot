@@ -10,6 +10,9 @@ export const config: EventConfig = {
   // Fires when a single member leaves on their own OR is removed/kicked
   // by an admin — Telegram reports both through the same field.
   trigger: "left_chat_member",
+  // Membership bookkeeping, not something a user "uses" — keeps working
+  // even while Developer Mode restricts everything else.
+  alwaysActive: true,
 };
 
 export async function execute({ api, event }: EventExecute) {

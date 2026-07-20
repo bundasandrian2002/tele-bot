@@ -19,4 +19,15 @@ export type EventConfig = {
    * handleCommands.ts.
    */
   skipCommandPrefix?: boolean;
+
+  /**
+   * When true, this event keeps running for non-admins even while
+   * chatbotConfig.developerMode is on. Reserved for protective/structural
+   * events that aren't really "a user using a bot feature" — group
+   * moderation (autokick) and membership bookkeeping (join/leave) — as
+   * opposed to events that actively respond to or reward what a non-admin
+   * says (autogreet, botname/AI, rankup), which stay gated by default.
+   * Defaults to false (gated).
+   */
+  alwaysActive?: boolean;
 };

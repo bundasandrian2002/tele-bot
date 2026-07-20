@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 import TelegramBot, { Message } from "node-telegram-bot-api";
 import { AgentTool, ChatbotConfig, Config } from "@/types";
 import { getPrefix } from "@/utils/getPrefix";
@@ -10,6 +10,11 @@ import { startTypingIndicator } from "@/utils/typingIndicator";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// OpenRouter model id — "by default" per spec, but still overridable via
+// env for anyone who wants a different OpenRouter-hosted model without
+// touching code.
+const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || "tencent/hy3:free";
 
 // Loaded once at module evaluation time — same approach as index.ts's
 // startup logs, so a missing/malformed file fails fast instead of on the
@@ -90,7 +95,7 @@ async function listAvailableCommands(): Promise<string> {
   return lines.sort().join("\n");
 }
 
-// Groq's tool-use models occasionally emit the send_result call as plain
+// Some tool-use models occasionally emit the send_result call as plain
 // JSON text (e.g. {"message": "...", "attachment_keys": [...]}) instead of
 // an actual tool call. When that happens, pull out just the `message`
 // field so the raw JSON blob never reaches the user — any keys it
@@ -131,17 +136,31 @@ export async function runAgent(
   chatbotConfig: ChatbotConfig,
   userContext?: string,
 ): Promise<string> {
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) {
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  if (!openrouterApiKey) {
     throw new Error(
-      "GROQ_API_KEY environment variable is not set. AI capabilities are disabled.",
+      "OPENROUTER_API_KEY environment variable is not set. AI capabilities are disabled.",
     );
   }
 
-  const groq = new Groq({ apiKey: groqApiKey });
+  const openrouter = new OpenAI({
+    apiKey: openrouterApiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+    // Optional, OpenRouter-recommended attribution headers for its
+    // leaderboards — harmless if unset, so no required config added by
+    // this switch. See https://openrouter.ai/docs for details.
+    defaultHeaders: {
+      ...(process.env.OPENROUTER_SITE_URL && {
+        "HTTP-Referer": process.env.OPENROUTER_SITE_URL,
+      }),
+      ...(process.env.OPENROUTER_SITE_NAME && {
+        "X-Title": process.env.OPENROUTER_SITE_NAME,
+      }),
+    },
+  });
   const tools = await loadAgentTools();
 
-  const groqTools = tools.map((t) => ({
+  const chatTools = tools.map((t) => ({
     type: "function" as const,
     function: {
       name: t.config.name,
@@ -229,10 +248,10 @@ export async function runAgent(
     let turns = 20; // Safety limit — prevents runaway tool-call loops
 
     while (turns-- > 0) {
-      const response = await groq.chat.completions.create({
-        model: "openai/gpt-oss-120b",
+      const response = await openrouter.chat.completions.create({
+        model: DEFAULT_MODEL,
         messages,
-        tools: groqTools,
+        tools: chatTools,
         tool_choice: "auto",
       });
 
@@ -246,8 +265,8 @@ export async function runAgent(
       // in the turn with this text as its caption (so it arrives as one
       // attachment, not media-then-separate-text); only fall back to
       // returning the text for a standalone message when there was no
-      // media to carry it. Groq's tool-use models don't always reliably
-      // close the loop with a send_result call, so this text still has to
+      // media to carry it. Not every tool-use model reliably closes the
+      // loop with a send_result call, so this text still has to
       // reach the user somehow.
       if (!choice.tool_calls || choice.tool_calls.length === 0) {
         const text = extractReplyText(choice.content || "");

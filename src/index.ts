@@ -29,6 +29,18 @@ const setupChatbot = async () => {
     console.error("Failed to load saved prefix, using default:", error);
   }
 
+  // Same idea for Developer Mode (see src/commands/developer.ts) — an
+  // admin who locked the bot down shouldn't have that silently undone by
+  // a restart. No row yet means "off", the config.ts default.
+  try {
+    const savedDeveloperMode = await getBotSetting("developer_mode");
+    if (savedDeveloperMode) {
+      chatbotConfig.developerMode = savedDeveloperMode === "true";
+    }
+  } catch (error) {
+    console.error("Failed to load saved developer mode, using default:", error);
+  }
+
   await handleCommands(wrappedBot, chatbotConfig);
   console.log(chalk.cyan.bold("[SYSTEM]: Ready to accept user commands!"));
 

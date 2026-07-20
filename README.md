@@ -6,7 +6,7 @@ A TypeScript Telegram bot with AI chat, Facebook/YouTube downloading, and TikTok
 
 - **Runtime**: Node.js with `tsx` (TypeScript execution)
 - **Bot library**: `node-telegram-bot-api`
-- **AI**: Groq SDK (powers `/ai` command)
+- **AI**: OpenRouter (powers `/ai` command)
 - **Keep-alive**: Express HTTP server
 
 ## Running the bot
@@ -22,7 +22,7 @@ npm start     # production
 | Variable | Required | Description |
 |---|---|---|
 | `BOT_TOKEN` | ✅ Yes | Telegram bot token from @BotFather |
-| `GROQ_API_KEY` | Optional | Powers the `/ai` command |
+| `OPENROUTER_API_KEY` | Optional | Powers the `/ai` command, via [OpenRouter](https://openrouter.ai) (default model: `tencent/hy3:free`) |
 | `SHOTI_APIKEY` | Optional | Powers `/shoti` and `/ishoti` TikTok commands |
 | `PORT` | Optional | Keep-alive server port (defaults to 3000) |
 | `DATABASE_URL` | ✅ Yes | NeonDB (Postgres) connection string — powers users, groups, balances, XP/levels. See "Database" below. |

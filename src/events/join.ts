@@ -10,6 +10,9 @@ export const config: EventConfig = {
   // event names — "new_chat_members" fires whenever one or more users
   // are added to the group, so it maps straight onto this event.
   trigger: "new_chat_members",
+  // Membership bookkeeping, not something a user "uses" — keeps welcoming
+  // new members even while Developer Mode restricts everything else.
+  alwaysActive: true,
 };
 
 export async function execute({ api, event }: EventExecute) {

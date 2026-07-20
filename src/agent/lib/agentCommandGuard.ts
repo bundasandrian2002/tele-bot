@@ -8,10 +8,11 @@ import { Config } from "@/types";
  * result the agent can quote directly in its reply instead of a generic
  * "execution was blocked" fallback.
  *
- * This bot has no ban list or cooldown store (unlike Cat-Bot's DB-backed
- * version) — the only constraint it enforces is the command's declared
- * `permission`. The guard is still a separate module so that gate lives in
- * exactly one place and test_command doesn't duplicate the check inline.
+ * Enforces two things: the command's declared `permission` (unchanged), and
+ * a per-user rate limit on how many commands a non-admin can run through the
+ * agent (new — see checkAgentCommandRateLimit below). Both checks are kept
+ * here rather than inline in test_command.ts so the gate lives in exactly
+ * one place.
  */
 export type CommandGuardResult = {
   /** Whether the command is permitted to execute for this user. */
@@ -41,5 +42,63 @@ export function inspectCommandConstraints(
     };
   }
 
+  return { allowed: true, reason: null };
+}
+
+// ---------------------------------------------------------------------------
+// Agent command rate limit
+// ---------------------------------------------------------------------------
+
+/**
+ * How many commands a non-admin can run through the agent (test_command)
+ * within AGENT_COMMAND_LIMIT_WINDOW_MS before being blocked. Admins are
+ * exempt entirely — see checkAgentCommandRateLimit.
+ */
+const AGENT_COMMAND_LIMIT = 3;
+const AGENT_COMMAND_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * In-memory only, same tradeoff as rankup.ts's XP cooldown and
+ * autogreet.ts's greet cooldown: per-process, resets on restart, no DB
+ * round-trip needed for something this cheap to get slightly wrong.
+ * Keyed by user id (not per-chat) — the limit is about the person, not
+ * which chat they asked from.
+ */
+const usage = new Map<number, { count: number; windowStart: number }>();
+
+/**
+ * Consumes one slot of a non-admin's agent-command quota and reports
+ * whether this call is allowed. Call once per command the agent is about
+ * to run (i.e. once per entry in test_command's `commands` array) — a
+ * single test_command call with 3 commands in it uses all 3 slots at once,
+ * same as three separate calls would.
+ *
+ * Admins always return allowed: true and never consume a slot.
+ */
+export function checkAgentCommandRateLimit(
+  userId: number,
+  isAdmin: boolean,
+): CommandGuardResult {
+  if (isAdmin) return { allowed: true, reason: null };
+
+  const now = Date.now();
+  const entry = usage.get(userId);
+
+  if (!entry || now - entry.windowStart >= AGENT_COMMAND_LIMIT_WINDOW_MS) {
+    usage.set(userId, { count: 1, windowStart: now });
+    return { allowed: true, reason: null };
+  }
+
+  if (entry.count >= AGENT_COMMAND_LIMIT) {
+    const hoursLeft = Math.ceil((AGENT_COMMAND_LIMIT_WINDOW_MS - (now - entry.windowStart)) / (60 * 60 * 1000));
+    return {
+      allowed: false,
+      reason:
+        `Agent command limit reached (${AGENT_COMMAND_LIMIT} per 24h for non-admins). ` +
+        `Resets in about ${hoursLeft}h, or ask a bot admin to run it for you.`,
+    };
+  }
+
+  entry.count += 1;
   return { allowed: true, reason: null };
 }

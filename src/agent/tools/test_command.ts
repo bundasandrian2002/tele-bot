@@ -9,7 +9,7 @@ import {
   InterceptedCall,
   MEDIA_METHODS,
 } from "@/agent/lib/commandResultStore";
-import { inspectCommandConstraints } from "@/agent/lib/agentCommandGuard";
+import { inspectCommandConstraints, checkAgentCommandRateLimit } from "@/agent/lib/agentCommandGuard";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,6 +168,15 @@ export const run: AgentTool["run"] = async (
       const { mod, error } = await loadCommandModule(name);
       if (!mod || error) {
         errors.push(error ?? `Command '${name}' not found.`);
+        continue;
+      }
+
+      // Rate limit first (cheaper, and the more fundamental gate) — one
+      // slot consumed per command entry, so a batch of 3 in a single
+      // test_command call uses the same quota as 3 separate calls would.
+      const rateLimit = checkAgentCommandRateLimit(fromId, isAdmin);
+      if (!rateLimit.allowed) {
+        errors.push(rateLimit.reason ?? `Command '${name}' blocked: rate limit exceeded.`);
         continue;
       }
 

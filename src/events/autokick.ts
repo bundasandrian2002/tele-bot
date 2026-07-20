@@ -12,6 +12,11 @@ export const config: EventConfig = {
   // Unlike autodl, spam counts regardless of whether the message is a
   // command — someone hammering "/help" 20 times in a row is still
   // spamming — so this intentionally does NOT set skipCommandPrefix.
+  //
+  // Also protective moderation, not a "feature" a user opts into — keeps
+  // guarding the group even while Developer Mode restricts everything
+  // else to admins.
+  alwaysActive: true,
 };
 
 // How many messages within the window count as spam.
