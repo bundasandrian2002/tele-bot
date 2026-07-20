@@ -5,7 +5,7 @@ import { resolveTargetUser } from "@/utils/resolveTargetUser";
 export const config: Config = {
   name: "balance",
   description:
-    "Check your $ balance, or someone else's by replying to their message or @mentioning them.",
+    "Check your balance, or someone else's by replying to their message or @mentioning them.",
   usage: "/balance OR /balance (reply to a user) OR /balance @username",
   permission: "user",
   creator: "itsunknown",
