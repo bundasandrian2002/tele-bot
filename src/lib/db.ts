@@ -35,6 +35,31 @@ pool.on("error", (err) => {
 });
 
 // ---------------------------------------------------------------------------
+// bot_settings — bot-wide key/value overrides (see sql/migrations/0002_bot_settings.sql)
+// ---------------------------------------------------------------------------
+
+export async function getBotSetting(key: string): Promise<string | undefined> {
+  const { rows } = await pool.query(
+    `SELECT value FROM bot_settings WHERE key = $1`,
+    [key],
+  );
+  return rows.length ? (rows[0].value as string) : undefined;
+}
+
+export async function setBotSetting(key: string, value: string): Promise<void> {
+  await pool.query(
+    `INSERT INTO bot_settings (key, value)
+     VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [key, value],
+  );
+}
+
+export async function deleteBotSetting(key: string): Promise<void> {
+  await pool.query(`DELETE FROM bot_settings WHERE key = $1`, [key]);
+}
+
+// ---------------------------------------------------------------------------
 // users / groups / group_members
 // ---------------------------------------------------------------------------
 
@@ -160,6 +185,24 @@ export async function addBalance(
   } finally {
     client.release();
   }
+}
+
+/**
+ * Timestamp of the user's most recent /daily claim (see
+ * src/commands/daily.ts), or undefined if they've never claimed one.
+ * Read from wallet_transactions rather than a dedicated column — 'daily'
+ * claims are already recorded there via addBalance()'s `type` argument,
+ * so this avoids a second source of truth that could drift from the ledger.
+ */
+export async function getLastDailyClaimAt(userId: number): Promise<Date | undefined> {
+  const { rows } = await pool.query(
+    `SELECT created_at FROM wallet_transactions
+     WHERE user_id = $1 AND type = 'daily'
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [userId],
+  );
+  return rows.length ? (rows[0].created_at as Date) : undefined;
 }
 
 // ---------------------------------------------------------------------------
