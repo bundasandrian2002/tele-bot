@@ -5,7 +5,7 @@ import { resolveTargetUser } from "@/utils/resolveTargetUser";
 export const config: Config = {
   name: "balance",
   description:
-    "Check your point balance, or someone else's by replying to their message or @mentioning them.",
+    "Check your $ balance, or someone else's by replying to their message or @mentioning them.",
   usage: "/balance OR /balance (reply to a user) OR /balance @username",
   permission: "user",
   creator: "itsunknown",
@@ -24,14 +24,14 @@ export async function execute({ api, event, chatbotConfig }: Execute) {
 
   // Bot admins (chatbotConfig.admins) always read as unlimited — the
   // underlying user_wallets row is untouched (BIGINT can't hold Infinity
-  // anyway, and nothing currently spends points), this is purely what
+  // anyway, and nothing currently spends it), this is purely what
   // /balance reports for them.
   if (chatbotConfig.admins.includes(target.id)) {
     await api.sendMessage(
       event.chat.id,
       isSelf
-        ? `💰 *Your Balance:* ♾️ (unlimited — admin)`
-        : `💰 *${displayName}'s Balance:* ♾️ (unlimited — admin)`,
+        ? `💰 *Your Balance:* $♾️ (unlimited — admin)`
+        : `💰 *${displayName}'s Balance:* $♾️ (unlimited — admin)`,
     );
     return;
   }
@@ -42,8 +42,8 @@ export async function execute({ api, event, chatbotConfig }: Execute) {
     await api.sendMessage(
       event.chat.id,
       isSelf
-        ? `💰 *Your Balance:* ${balance.toLocaleString()} points`
-        : `💰 *${displayName}'s Balance:* ${balance.toLocaleString()} points`,
+        ? `💰 *Your Balance:* $${balance.toLocaleString()}`
+        : `💰 *${displayName}'s Balance:* $${balance.toLocaleString()}`,
     );
   } catch (error) {
     console.error("Error executing 'balance':", error);

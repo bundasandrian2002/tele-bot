@@ -66,7 +66,7 @@ async function buildUserContext(event: Execute["event"]): Promise<string | undef
 
   try {
     const balance = await getBalance(user.id);
-    parts.push(`${balance.toLocaleString()} points`);
+    parts.push(`$${balance.toLocaleString()}`);
   } catch (error) {
     console.error("ai command: failed to fetch balance:", error);
   }

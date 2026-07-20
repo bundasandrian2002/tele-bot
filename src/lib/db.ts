@@ -269,7 +269,7 @@ export async function getUserRank(userId: number, groupId: number): Promise<numb
   return Number(rows[0].rank);
 }
 
-export type LevelReward = { reward_points: number; message: string | null };
+export type LevelReward = { reward_coins: number; message: string | null };
 
 export async function getLevelReward(level: number): Promise<LevelReward | undefined> {
   const { rows } = await pool.query(
@@ -277,5 +277,5 @@ export async function getLevelReward(level: number): Promise<LevelReward | undef
     [level],
   );
   if (!rows.length) return undefined;
-  return { reward_points: Number(rows[0].reward_points), message: rows[0].message };
+  return { reward_coins: Number(rows[0].reward_coins), message: rows[0].message };
 }

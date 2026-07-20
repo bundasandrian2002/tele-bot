@@ -5,9 +5,9 @@ import { xpProgress } from "@/lib/leveling";
 export const config: AgentTool["config"] = {
   name: "rankup",
   description:
-    "Look up a user's live level, XP progress, group leaderboard rank, and point balance — " +
+    "Look up a user's live level, XP progress, group leaderboard rank, and $ balance — " +
     "the same data the rankup event tracks and cards off of. Use this whenever the user asks " +
-    "about their (or someone else's) level, rank, XP, or points; prefer it over the 'User profile' " +
+    "about their (or someone else's) level, rank, XP, or $ balance; prefer it over the 'User profile' " +
     "line in your system prompt, which is only a snapshot taken at the start of the turn and can " +
     "be stale. Defaults to whoever is chatting with you, or whoever they replied to — pass " +
     "target_user_id to check a specific person instead (e.g. from an @mention).",
@@ -37,10 +37,10 @@ export const run: AgentTool["run"] = async (
 
   try {
     const balance = await getBalance(userId);
-    lines.push(`- Points: ${balance.toLocaleString()}`);
+    lines.push(`- $: ${balance.toLocaleString()}`);
   } catch (err) {
     lines.push(
-      `- Points: unavailable (${err instanceof Error ? err.message : String(err)})`,
+      `- $: unavailable (${err instanceof Error ? err.message : String(err)})`,
     );
   }
 

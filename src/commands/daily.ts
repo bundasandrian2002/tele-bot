@@ -3,7 +3,7 @@ import { upsertUser, getLastDailyClaimAt, addBalance } from "@/lib/db";
 
 export const config: Config = {
   name: "daily",
-  description: "Claim your daily point reward. Resets 24 hours after your last claim.",
+  description: "Claim your daily $ reward. Resets 24 hours after your last claim.",
   usage: "/daily",
   permission: "user",
   creator: "itsunknown",
@@ -65,8 +65,8 @@ export async function execute({ api, event }: Execute) {
     await api.sendMessage(
       event.chat.id,
       `🎁 *Daily Reward Claimed!*\n\n` +
-        `+*${amount.toLocaleString()}* points\n` +
-        `💰 Balance: *${balanceAfter.toLocaleString()}* points\n\n` +
+        `+*$${amount.toLocaleString()}*\n` +
+        `💰 Balance: *$${balanceAfter.toLocaleString()}*\n\n` +
         `Come back in 24 hours for more.`,
     );
   } catch (error) {

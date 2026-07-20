@@ -79,9 +79,9 @@ export async function execute({ api, event }: EventExecute) {
     // Rank-up logic: look up a custom reward for this level, falling back
     // to a flat per-level default, then credit it through the ledger.
     const reward = await getLevelReward(newLevel);
-    const rewardPoints = reward?.reward_points ?? newLevel * DEFAULT_REWARD_PER_LEVEL;
-    if (rewardPoints > 0) {
-      await addBalance(user.id, rewardPoints, "levelup_reward", {
+    const rewardCoins = reward?.reward_coins ?? newLevel * DEFAULT_REWARD_PER_LEVEL;
+    if (rewardCoins > 0) {
+      await addBalance(user.id, rewardCoins, "levelup_reward", {
         group_id: event.chat.id,
         level: newLevel,
       });
@@ -114,7 +114,7 @@ export async function execute({ api, event }: EventExecute) {
     // sanitizer's span parser doesn't handle a [text](url) link nested
     // inside *bold*.
     const mention = `[${displayName}](tg://user?id=${user.id})`;
-    const rewardLine = rewardPoints > 0 ? ` Earned *${rewardPoints}* point's.` : "";
+    const rewardLine = rewardCoins > 0 ? ` Earned *$${rewardCoins}*.` : "";
     const customMessage = reward?.message ? `\n\n${reward.message}` : "";
 
     await api.sendPhoto(
