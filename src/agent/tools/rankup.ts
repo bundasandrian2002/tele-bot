@@ -37,10 +37,10 @@ export const run: AgentTool["run"] = async (
 
   try {
     const balance = await getBalance(userId);
-    lines.push(`- $: ${balance.toLocaleString()}`);
+    lines.push(`- USD: ${balance.toLocaleString()}`);
   } catch (err) {
     lines.push(
-      `- $: unavailable (${err instanceof Error ? err.message : String(err)})`,
+      `- USD: unavailable (${err instanceof Error ? err.message : String(err)})`,
     );
   }
 
