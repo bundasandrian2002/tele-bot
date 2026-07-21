@@ -1,69 +1,154 @@
 import { Config, Execute } from "@/types";
-import axios from "axios";
 
 export const config: Config = {
   name: "vitamin",
-  description: "Generate a random cosplay from the archive.",
+  description: "Generate a random video from capcut.",
   usage: "/vitamin",
   permission: "user",
   creator: "itsunknown",
 };
 
-const REPO_URL = "https://github.com/ajirodesu/cosplay/tree/main/";
-
-// GitHub's repo-tree page now embeds the file listing as JSON inside the
-// page payload (`"tree":{"items":[{"name":"x.mp4","path":"x.mp4",...}]}`)
-// rather than as plain `<a href="...">` anchor tags, so that's matched
-// first. The old anchor-tag pattern is kept as a fallback in case GitHub
-// ever serves the older markup again for a particular request.
-const JSON_ITEM_RE = /"name":"[^"]+\.mp4","path":"([^"]+)"/g;
-const ANCHOR_HREF_RE = /href="\/ajirodesu\/cosplay\/blob\/main\/([^"]+\.mp4)"/g;
-
-/**
- * Scrapes the ajirodesu/cosplay GitHub tree for .mp4 file paths and returns
- * a raw.githubusercontent.com URL for a randomly selected video.
- * Throws on any error so the caller can surface a clean error message.
- *
- * NOTE: GitHub serves a stripped-down HTML response (no file-tree data at
- * all) to requests that don't look like they came from a browser. axios'
- * default User-Agent is "axios/<version>", which GitHub treats that way,
- * so every request here used to come back with zero matches. Sending an
- * explicit browser-like User-Agent fixes that.
- */
-async function fetchCosplayVideo(): Promise<string> {
-  const { data: html } = await axios.get<string>(REPO_URL, {
-    timeout: 8000,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      Accept: "text/html",
-    },
-  });
-
-  const files = new Set<string>();
-
-  let match: RegExpExecArray | null;
-  while ((match = JSON_ITEM_RE.exec(html)) !== null) {
-    if (match[1]) files.add(match[1]);
-  }
-  if (!files.size) {
-    while ((match = ANCHOR_HREF_RE.exec(html)) !== null) {
-      if (match[1]) files.add(match[1]);
-    }
-  }
-
-  if (!files.size) {
-    throw new Error("No videos found.");
-  }
-
-  const fileList = Array.from(files);
-  const file = fileList[Math.floor(Math.random() * fileList.length)];
-  return `https://raw.githubusercontent.com/ajirodesu/cosplay/main/${file}`;
-}
+const link = [
+  "https://i.imgur.com/XCC2HCy.mp4",
+  "https://i.imgur.com/mdHeCCc.mp4",
+  "https://i.imgur.com/yUd4bJE.mp4",
+  "https://i.imgur.com/TFrX0P4.mp4",
+  "https://i.imgur.com/mb89V2D.mp4",
+  "https://i.imgur.com/ca2yBhv.mp4",
+  "https://i.imgur.com/srnfztE.mp4",
+  "https://i.imgur.com/dcBSemx.mp4",
+  "https://i.imgur.com/qYQPkvP.mp4",
+  "https://i.imgur.com/Io30eVo.mp4",
+  "https://i.imgur.com/Cp4wbP9.mp4",
+  "https://i.imgur.com/SiFjpir.mp4",
+  "https://i.imgur.com/0du8XoQ.mp4",
+  "https://i.imgur.com/hq3FBw1.mp4",
+  "https://i.imgur.com/4ZOt8gt.mp4",
+  "https://i.imgur.com/3uDBjn3.mp4",
+  "https://i.imgur.com/cRnzcMg.mp4",
+  "https://i.imgur.com/37Wlf23.mp4",
+  "https://i.imgur.com/6NgvPF3.mp4",
+  "https://i.imgur.com/tWypNCc.mp4",
+  "https://i.imgur.com/ODGJlnG.mp4",
+  "https://i.imgur.com/JWF9ruC.mp4",
+  "https://i.imgur.com/Az5WPaB.mp4",
+  "https://i.imgur.com/BNfXX5q.mp4",
+  "https://i.imgur.com/P2GbX7o.mp4",
+  "https://i.imgur.com/6rMzcIB.mp4",
+  "https://i.imgur.com/1NCnpfS.mp4",
+  "https://i.imgur.com/vkNBKnb.mp4",
+  "https://i.imgur.com/Q0ENsC6.mp4",
+  "https://i.imgur.com/JY9n9B5.mp4",
+  "https://i.imgur.com/Iel2jij.mp4",
+  "https://i.imgur.com/pecBWyI.mp4",
+  "https://i.imgur.com/IrqDZXR.mp4",
+  "https://i.imgur.com/V48iXIg.mp4",
+  "https://i.imgur.com/Vy4Esss.mp4",
+  "https://i.imgur.com/jzh5xNt.mp4",
+  "https://i.imgur.com/D6EnMwz.mp4",
+  "https://i.imgur.com/409GY0m.mp4",
+  "https://i.imgur.com/9y5N7Ef.mp4",
+  "https://i.imgur.com/JeQzFk6.mp4",
+  "https://i.imgur.com/dzT43pY.mp4",
+  "https://i.imgur.com/Pv3ukt8.mp4",
+  "https://i.imgur.com/aDHMmDG.mp4",
+  "https://i.imgur.com/KF6PBdt.mp4",
+  "https://i.imgur.com/cZYdGaY.mp4",
+  "https://i.imgur.com/LtP2aCo.mp4",
+  "https://i.imgur.com/y2c4SJf.mp4",
+  "https://i.imgur.com/h8pxLA7.mp4",
+  "https://i.imgur.com/vwQZeUA.mp4",
+  "https://i.imgur.com/KmifFJf.mp4",
+  "https://i.imgur.com/GXo6zmf.mp4",
+  "https://i.imgur.com/9nbup0Y.mp4",
+  "https://i.imgur.com/Ys2s473.mp4",
+  "https://i.imgur.com/LNudggx.mp4",
+  "https://i.imgur.com/LlRje2D.mp4",
+  "https://i.imgur.com/em8jNsi.mp4",
+  "https://i.imgur.com/SSNT2xH.mp4",
+  "https://i.imgur.com/tBVSKL0.mp4",
+  "https://i.imgur.com/CoHsfGq.mp4",
+  "https://i.imgur.com/msrG9Hg.mp4",
+  "https://i.imgur.com/1wuNUeu.mp4",
+  "https://i.imgur.com/sW9I9WX.mp4",
+  "https://i.imgur.com/H8Bau50.mp4",
+  "https://i.imgur.com/knBVkNa.mp4",
+  "https://i.imgur.com/Dnou58v.mp4",
+  "https://i.imgur.com/s7D0EYr.mp4",
+  "https://i.imgur.com/JwIwlQQ.mp4",
+  "https://i.imgur.com/YV2Wzoq.mp4",
+  "https://i.imgur.com/nTSrod9.mp4",
+  "https://i.imgur.com/YlAuqwx.mp4",
+  "https://i.imgur.com/fbP3GBO.mp4",
+  "https://i.imgur.com/1aXmTrO.mp4",
+  "https://i.imgur.com/sbRLn2k.mp4",
+  "https://i.imgur.com/GO038XI.mp4",
+  "https://i.imgur.com/Q2pWzAi.mp4",
+  "https://i.imgur.com/aRrtkHd.mp4",
+  "https://i.imgur.com/yzYnvIn.mp4",
+  "https://i.imgur.com/8OhiCiW.mp4",
+  "https://i.imgur.com/cBQvhYJ.mp4",
+  "https://i.imgur.com/mWd1ZxA.mp4",
+  "https://i.imgur.com/jRL4bMo.mp4",
+  "https://i.imgur.com/PtpRVOa.mp4",
+  "https://i.imgur.com/uaCOgF2.mp4",
+  "https://i.imgur.com/wSmgclj.mp4",
+  "https://i.imgur.com/rE8LNgI.mp4",
+  "https://i.imgur.com/6vwvqIn.mp4",
+  "https://i.imgur.com/cy4aT71.mp4",
+  "https://i.imgur.com/ieNbUuN.mp4",
+  "https://i.imgur.com/AxoNEhW.mp4",
+  "https://i.imgur.com/xJUrqOK.mp4",
+  "https://i.imgur.com/4bR7QR0.mp4",
+  "https://i.imgur.com/L5uNi3l.mp4",
+  "https://i.imgur.com/ViKpycp.mp4",
+  "https://i.imgur.com/gGw6max.mp4",
+  "https://i.imgur.com/CIOKrko.mp4",
+  "https://i.imgur.com/XaWajYD.mp4",
+  "https://i.imgur.com/YT4fiIv.mp4",
+  "https://i.imgur.com/qizOjrb.mp4",
+  "https://i.imgur.com/jBiAVpU.mp4",
+  "https://i.imgur.com/Ia9Yx2U.mp4",
+  "https://i.imgur.com/gPXFLT3.mp4",
+  "https://i.imgur.com/lLQs9jL.mp4",
+  "https://i.imgur.com/62D82Ac.mp4",
+  "https://i.imgur.com/CnEkVq7.mp4",
+  "https://i.imgur.com/bGbFGzr.mp4",
+  "https://i.imgur.com/53ncsV4.mp4",
+  "https://i.imgur.com/rxCfOrT.mp4",
+  "https://i.imgur.com/WrL27wI.mp4",
+  "https://i.imgur.com/tf59GxV.mp4",
+  "https://i.imgur.com/tTfCC3n.mp4",
+  "https://i.imgur.com/SdUsR7W.mp4",
+  "https://i.imgur.com/DZ5w44v.mp4",
+  "https://i.imgur.com/RGB1lxJ.mp4",
+  "https://i.imgur.com/9XH6AlW.mp4",
+  "https://i.imgur.com/1oDIREL.mp4",
+  "https://i.imgur.com/XA14XOP.mp4",
+  "https://i.imgur.com/ADOOweh.mp4",
+  "https://i.imgur.com/cDLGu7K.mp4",
+  "https://i.imgur.com/vpvhZtQ.mp4",
+  "https://i.imgur.com/rIy3NUx.mp4",
+  "https://i.imgur.com/6RxdDer.mp4",
+  "https://i.imgur.com/2sT4SNg.mp4",
+  "https://i.imgur.com/5kVTdrC.mp4",
+  "https://i.imgur.com/uuZTTev.mp4",
+  "https://i.imgur.com/BxvQ2hm.mp4",
+  "https://i.imgur.com/4E2TwSI.mp4",
+  "https://i.imgur.com/hd73w9F.mp4",
+  "https://i.imgur.com/svmV0po.mp4",
+  "https://i.imgur.com/R54y0BT.mp4",
+  "https://i.imgur.com/ebVgxSW.mp4",
+  "https://i.imgur.com/z8nn0r3.mp4",
+  "https://i.imgur.com/RP9un2f.mp4",
+  "https://i.imgur.com/lxI61gs.mp4",
+  "https://i.imgur.com/haDHqHL.mp4",
+  "https://i.imgur.com/aROBpVu.mp4",
+];
 
 export async function execute({ api, event }: Execute) {
   try {
-    const videoUrl = await fetchCosplayVideo();
+    const videoUrl = link[Math.floor(Math.random() * link.length)];
 
     await api.sendVideo(event.chat.id, videoUrl, {
       caption: "Downloaded Successfull(y).",
