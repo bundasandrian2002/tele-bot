@@ -12,8 +12,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { getActiveGroups, getBotSetting, setBotSetting } from "@/lib/db";
 
-// type BroadcastPeriod = "morning" | "afternoon" | "evening" | "midnight";
-
 type BroadcastSlot = {
   period: string;
   hour: number;
@@ -22,13 +20,19 @@ type BroadcastSlot = {
   label: string;
 };
 
-// Server-local time — this bot has no per-group timezone setting, so
-// "morning" means morning wherever the process happens to be running.
+// Bot audience is Manila-based, so every slot below fires at that wall-clock
+// hour in Asia/Manila — regardless of what timezone the server's OS clock
+// happens to be set to (local dev machine, UTC container host, etc).
+const GREETING_TIME_ZONE = "Asia/Manila";
+
 const BROADCAST_SCHEDULE: BroadcastSlot[] = [
   { period: "morning", hour: 6, minute: 0, emoji: "🌅", label: "Good morning" },
   { period: "afternoon", hour: 12, minute: 0, emoji: "☀️", label: "Good afternoon" },
   { period: "evening", hour: 18, minute: 0, emoji: "🌇", label: "Good evening" },
-  { period: "midnight", hour: 24, minute: 0, emoji: "🌙", label: "It's midnight" },
+  // Midnight is hour 0, not 24 — Intl (like Date#getHours) reports the
+  // 0-23 hour, so a literal 24 here would never match and this slot would
+  // silently never fire.
+  { period: "midnight", hour: 0, minute: 0, emoji: "🌙", label: "It's midnight" },
 ];
 
 // How often we check the clock against BROADCAST_SCHEDULE. Well under 60s
@@ -39,17 +43,40 @@ const POLL_INTERVAL_MS = 30_000;
 // bot_settings table src/lib/db.ts already uses for prefix/developer_mode.
 // This has to survive restarts: an in-memory flag would re-broadcast right
 // after every deploy/restart that happens to land inside a target minute.
-function lastSentSettingKey(period: BroadcastPeriod): string {
+function lastSentSettingKey(period: string): string {
   return `autogreet_last_sent_${period}`;
 }
 
-// YYYY-MM-DD in server-local time (matches the local getHours()/getMinutes()
-// checks below), so a slot fires at most once per calendar day.
-function localDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+// Single Intl formatter reused across calls, pulling year/month/day/hour/
+// minute for Asia/Manila in one pass. Reading all five fields from one
+// formatToParts() call (rather than separate hour/minute/date lookups)
+// avoids the edge case where the wall clock ticks over between two
+// separate `new Date()` reads right at a slot boundary or midnight.
+const manilaFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: GREETING_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "numeric",
+  minute: "numeric",
+  hour12: false,
+});
+
+type ManilaNow = { dateString: string; hour: number; minute: number };
+
+function getManilaNow(date: Date = new Date()): ManilaNow {
+  const parts = manilaFormatter.formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+
+  let hour = Number.parseInt(get("hour"), 10);
+  // Some ICU implementations format midnight as "24" with hour12: false —
+  // normalize so the boundary checks below never see an out-of-range value.
+  if (hour === 24) hour = 0;
+  const minute = Number.parseInt(get("minute"), 10);
+
+  const dateString = `${get("year")}-${get("month")}-${get("day")}`;
+
+  return { dateString, hour, minute };
 }
 
 async function broadcastGreeting(bot: TelegramBot, slot: BroadcastSlot) {
@@ -70,11 +97,10 @@ async function broadcastGreeting(bot: TelegramBot, slot: BroadcastSlot) {
 }
 
 async function checkSchedule(bot: TelegramBot) {
-  const now = new Date();
-  const today = localDateString(now);
+  const { dateString: today, hour, minute } = getManilaNow();
 
   for (const slot of BROADCAST_SCHEDULE) {
-    if (now.getHours() !== slot.hour || now.getMinutes() !== slot.minute) continue;
+    if (hour !== slot.hour || minute !== slot.minute) continue;
 
     const key = lastSentSettingKey(slot.period);
     try {
