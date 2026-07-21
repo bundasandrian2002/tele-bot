@@ -48,7 +48,7 @@ const setupChatbot = async () => {
   await handleEvents(wrappedBot, chatbotConfig);
   console.log(chalk.cyan.bold("[SYSTEM]: Ready to accept user events!"));
 
-  // AutoGreet's morning/afternoon/evening/midnight broadcast
+  // AutoGreet's Morning/Afternoon/Evening/Night broadcast
   // (src/lib/autogreetScheduler.ts) isn't triggered by an incoming Telegram
   // update, so handleEvents() above doesn't wire it up — it's started
   // here instead, once, as its own polling interval.
