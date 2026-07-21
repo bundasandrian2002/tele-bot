@@ -28,7 +28,7 @@ const BROADCAST_SCHEDULE: BroadcastSlot[] = [
   { period: "morning", hour: 6, minute: 0, emoji: "🌅", label: "Good morning" },
   { period: "afternoon", hour: 12, minute: 0, emoji: "☀️", label: "Good afternoon" },
   { period: "evening", hour: 18, minute: 0, emoji: "🌇", label: "Good evening" },
-  { period: "midnight", hour: 0, minute: 0, emoji: "🌙", label: "It's midnight" },
+  { period: "midnight", hour: 24, minute: 0, emoji: "🌙", label: "It's midnight" },
 ];
 
 // How often we check the clock against BROADCAST_SCHEDULE. Well under 60s
