@@ -13,8 +13,7 @@ const __dirname = path.dirname(__filename);
 
 // Groq model id — "by default" per spec, but still overridable via env
 // for anyone who wants a different Groq-hosted model without touching code.
-// const DEFAULT_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
-const DEFAULT_MODEL = process.env.GROQ_MODEL || "nvidia/nemotron-3-ultra-550b-a55b:free";
+const DEFAULT_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 // Loaded once at module evaluation time — same approach as index.ts's
 // startup logs, so a missing/malformed file fails fast instead of on the
