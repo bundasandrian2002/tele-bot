@@ -12,10 +12,10 @@
 import TelegramBot from "node-telegram-bot-api";
 import { getActiveGroups, getBotSetting, setBotSetting } from "@/lib/db";
 
-type BroadcastPeriod = "morning" | "afternoon" | "evening" | "midnight";
+// type BroadcastPeriod = "morning" | "afternoon" | "evening" | "midnight";
 
 type BroadcastSlot = {
-  period: BroadcastPeriod;
+  period: string;
   hour: number;
   minute: number;
   emoji: string;
