@@ -46,7 +46,7 @@ const lastErr: Record<number, string> = {};
 
 let sent = 0;
 let failed = 0;
-const DEFAULT_MS = 60 * 60 * 1000;
+const DEFAULT_MS = 60_000;
 
 async function dispatch({ api, event, args }: Execute) {
   // args is already a string[] split on whitespace by the command
@@ -68,9 +68,9 @@ async function dispatch({ api, event, args }: Execute) {
         return api.sendMessage(event.chat.id, "⛔ Invalid number.");
 
       const ms = unit.startsWith("hour")
-        ? n * 60 * 60 * 1000
+        ? n * 60_000
         : unit.startsWith("minute")
-          ? n * 60 * 1000
+          ? n * 60_000
           : NaN;
 
       if (isNaN(ms)) {
@@ -87,7 +87,7 @@ async function dispatch({ api, event, args }: Execute) {
     case "interval":
       return api.sendMessage(
         event.chat.id,
-        `⏱ Current interval: ${curInterval / 60000} minute(s).`,
+        `⏱ Current interval: ${curInterval / 60_000} minute(s).`,
       );
 
     case "on": {
@@ -100,7 +100,7 @@ async function dispatch({ api, event, args }: Execute) {
 
       state[threadID] = true;
       const intervalMS = interval[threadID] || DEFAULT_MS;
-      const minutes = intervalMS / 60000;
+      const minutes = intervalMS / 60_000;
 
       await api.sendMessage(
         event.chat.id,
@@ -129,7 +129,7 @@ async function dispatch({ api, event, args }: Execute) {
 
     case "status": {
       const running = state[threadID] ? "ON" : "OFF";
-      const minutes = curInterval / 60000;
+      const minutes = curInterval / 60_000;
       const error = lastErr[threadID]
         ? `❌ Last error: ${lastErr[threadID]}`
         : "";
