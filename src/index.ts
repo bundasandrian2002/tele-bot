@@ -74,7 +74,7 @@ const setupChatbot = async () => {
       };
 
       try {
-        await wrappedBot.editMessageText("✅ Successfully Restarted!", {
+        await wrappedBot.editMessageText("✅ Successfully restarted!", {
           chat_id: chatId,
           message_id: messageId,
         });
@@ -83,7 +83,7 @@ const setupChatbot = async () => {
         // is gone — fall back to a fresh message so the confirmation
         // still lands somewhere.
         console.error("Failed to edit restart confirmation, sending new message:", error);
-        await wrappedBot.sendMessage(chatId, "✅ Successfully Restarted!");
+        await wrappedBot.sendMessage(chatId, "✅ Successfully restarted!");
       }
 
       await deleteBotSetting("pending_restart");
