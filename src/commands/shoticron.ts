@@ -242,23 +242,49 @@ async function pushOne(api: TelegramBot, event: Message) {
       caption: `@${user.username}`,
     });
 
-    // ✅ React to the triggering /shoticron message with 🔥 on every
-    // successful auto-post. setMessageReaction *replaces* the reaction set
-    // on that message rather than stacking one on top of another, so
-    // re-applying the same reaction on every recurring send is harmless —
-    // it just keeps confirming "still working" rather than piling up
-    // duplicate reactions. Reaction must be an array of reaction objects,
-    // not a JSON string — matches the shape used everywhere else in this
-    // project (see handleCommands.ts, autogreetScheduler.ts).
-    await api.setMessageReaction(event.chat.id, event.message_id, {
-      reaction: [{ type: "emoji", emoji: "🔥" }],
-    });
-
     sent++;
+
+    // Reaction is best-effort and kept separate from the send above: if
+    // this throws (e.g. the triggering /shoticron message has aged out
+    // of Telegram's reaction window), it must not roll back the fact
+    // that the video already sent successfully — previously this call
+    // shared the same try block as sendVideo, so a reaction failure here
+    // would fall into the catch below, increment `failed`, and overwrite
+    // `lastErr` with a misleading "reaction failed" message even though
+    // the video had gone out fine. setMessageReaction *replaces* the
+    // reaction set on that message rather than stacking one on top of
+    // another, so re-applying the same reaction on every recurring send
+    // is harmless — it just keeps confirming "still working". Reaction
+    // must be an array of reaction objects, not a JSON string — matches
+    // the shape used everywhere else in this project (see
+    // handleCommands.ts, autogreetScheduler.ts).
+    try {
+      await api.setMessageReaction(event.chat.id, event.message_id, {
+        reaction: [{ type: "emoji", emoji: "🔥" }],
+      });
+    } catch (error) {
+      console.error("[shoticron] reaction failed:", error);
+    }
   } catch (e) {
     failed++;
     const message = e instanceof Error ? e.message : String(e);
     lastErr[event.chat.id] = message;
-    console.error("[shoticron]:", message);
+    console.error("[shoticron]", message);
+
+    // This used to be silent beyond the counters above — from the chat's
+    // perspective, a recurring send that fails every tick looked
+    // identical to the interval never firing at all. Every other failure
+    // path in this file (top, default) already reports to the chat;
+    // this brings the interval's own failures in line with that instead
+    // of requiring someone to know to run /shoticron status to find out
+    // why nothing's showing up.
+    try {
+      await api.sendMessage(
+        event.chat.id,
+        `❌ Auto-shoti send failed: ${message}`,
+      );
+    } catch (error) {
+      console.error("[shoticron] failed to report error to chat:", error);
+    }
   }
 }
