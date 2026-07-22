@@ -7,7 +7,7 @@ export const config: Config = {
   name: "shoticron",
   description:
     "Automatically generate a random video from TikTok on a recurring interval.",
-  usage: "/shoticron <on|off|status|setinterval|interval|reset|top>",
+  usage: "/shoticron <on|off|status|setinterval|interval|reset>",
   permission: "admin",
   creator: "libyzxy0",
 };
@@ -148,31 +148,6 @@ async function dispatch({ api, event, args }: Execute) {
       failed = 0;
       return api.sendMessage(event.chat.id, "✅ Counters reset successfully.");
 
-    case "top": {
-      try {
-        const topUsers = await getShotiClient().getTop();
-        // Fenced code block on purpose — the outgoing-message wrapper
-        // (utils/wrapper.ts) auto-applies MarkdownV2 and escapes reserved
-        // characters, but a ``` block is one of the spans it preserves
-        // verbatim (aside from backticks/backslashes) — see
-        // markdown.util.ts — so the JSON renders as formatted instead of
-        // getting escaped into unreadable text.
-        return api.sendMessage(
-          event.chat.id,
-          "🏆 *Top users*\n\n```json\n" +
-            JSON.stringify(topUsers, null, 2) +
-            "\n```",
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        api.sendMessage(
-          event.chat.id,
-          "❌ Failed to fetch top users: " + message,
-        );
-        return false;
-      }
-    }
-
     default: {
       await api.sendMessage(event.chat.id, "⏳ Fetching video...");
       try {
@@ -190,6 +165,15 @@ async function dispatch({ api, event, args }: Execute) {
         const { user, content } = result;
         const videoUrl = Array.isArray(content) ? content[0] : content;
 
+        // Same guard as pushOne() — see its comment for why a "successful"
+        // response can still carry no usable video URL.
+        if (!videoUrl) {
+          throw new Error(
+            "Shoti API returned no video content" +
+              ("code" in result ? ` (code: ${result.code})` : ""),
+          );
+        }
+
         await api.sendVideo(event.chat.id, videoUrl, {
           caption: `@${user.username}`,
         });
@@ -205,7 +189,7 @@ async function dispatch({ api, event, args }: Execute) {
 // Thin wrapper around dispatch() — the actual command logic. This is what
 // gets exported and is what handleCommands.ts calls. Its only job is to
 // guarantee /shoticron always produces a visible reply: dispatch() already
-// catches known failure points (top, default, pushOne), but this outer
+// catches known failure points (default, pushOne), but this outer
 // catch is the backstop for anything else, including getShotiClient()
 // throwing on its very first call (e.g. an invalid SHOTI_APIKEY). Without
 // this, an uncaught error here would just be a server-side console.error
@@ -238,6 +222,20 @@ async function pushOne(api: TelegramBot, event: Message) {
     const { user, content } = result;
     const videoUrl = Array.isArray(content) ? content[0] : content;
 
+    // getShoti() can also "succeed" with an empty content array (e.g. a
+    // temporary rate limit or exhaustion on the upstream API's side)
+    // rather than an explicit `{ error }` shape — that's a distinct
+    // failure mode from the "error" in result check above, and without
+    // this guard it would silently call sendVideo(chatId, undefined, ...),
+    // producing a confusing low-level Telegram/library error instead of
+    // a clear, actionable one.
+    if (!videoUrl) {
+      throw new Error(
+        "Shoti API returned no video content" +
+          ("code" in result ? ` (code: ${result.code})` : ""),
+      );
+    }
+
     await api.sendVideo(event.chat.id, videoUrl, {
       caption: `@${user.username}`,
     });
@@ -262,8 +260,8 @@ async function pushOne(api: TelegramBot, event: Message) {
       await api.setMessageReaction(event.chat.id, event.message_id, {
         reaction: [{ type: "emoji", emoji: "🔥" }],
       });
-    } catch (error) {
-      console.error("[shoticron] reaction failed:", error);
+    } catch (reactionError) {
+      console.error("[shoticron] reaction failed:", reactionError);
     }
   } catch (e) {
     failed++;
@@ -274,8 +272,8 @@ async function pushOne(api: TelegramBot, event: Message) {
     // This used to be silent beyond the counters above — from the chat's
     // perspective, a recurring send that fails every tick looked
     // identical to the interval never firing at all. Every other failure
-    // path in this file (top, default) already reports to the chat;
-    // this brings the interval's own failures in line with that instead
+    // path in this file (default) already reports to the chat; this
+    // brings the interval's own failures in line with that instead
     // of requiring someone to know to run /shoticron status to find out
     // why nothing's showing up.
     try {
@@ -283,8 +281,8 @@ async function pushOne(api: TelegramBot, event: Message) {
         event.chat.id,
         `❌ Auto-shoti send failed: ${message}`,
       );
-    } catch (error) {
-      console.error("[shoticron] failed to report error to chat:", error);
+    } catch (sendError) {
+      console.error("[shoticron] failed to report error to chat:", sendError);
     }
   }
 }
