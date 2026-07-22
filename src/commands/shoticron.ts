@@ -5,7 +5,8 @@ import Shoti from "showty";
 
 export const config: Config = {
   name: "shoticron",
-  description: "Automatically generate a random video from TikTok on a recurring interval.",
+  description:
+    "Automatically generate a random video from TikTok on a recurring interval.",
   usage: "/shoticron <on|off|status|setinterval|interval|reset|top>",
   permission: "admin",
   creator: "libyzxy0",
@@ -20,11 +21,22 @@ if (!process.env.SHOTI_APIKEY) {
   );
 }
 
-// The rest of the Shoti-family commands in this project (shoti.ts, ishoti.ts,
-// add.ts) import from "showty" — that's the package actually listed in
-// package.json, not "shoti". Using the same package/instance here keeps
-// /shoticron talking to the same client the rest of the bot already depends on.
-const shoti = new Shoti(process.env.SHOTI_APIKEY);
+// Constructing the client at module scope used to mean: if the "showty"
+// constructor validates its argument and throws for a missing/invalid
+// SHOTI_APIKEY, that throw happens the instant this file is imported —
+// before execute() ever runs. handleCommands.ts's dynamic import() only
+// console.errors a load failure like that and returns; nothing gets sent
+// to the chat, so the bot looks like it's ignoring /shoticron entirely.
+// Deferring construction to first actual use, inside a try/catch (see
+// getShotiClient() below), means any such error surfaces as a normal
+// in-chat error message instead of silently killing the whole command.
+let shotiClient: Shoti | null = null;
+function getShotiClient(): Shoti {
+  if (!shotiClient) {
+    shotiClient = new Shoti(process.env.SHOTI_APIKEY);
+  }
+  return shotiClient;
+}
 
 // Keyed by chat id (event.chat.id is a number) — one auto-post loop, one
 // custom interval, and one last-error message per chat.
@@ -36,7 +48,7 @@ let sent = 0;
 let failed = 0;
 const DEFAULT_MS = 60 * 60 * 1000;
 
-export async function execute({ api, event, args }: Execute) {
+async function dispatch({ api, event, args }: Execute) {
   // args is already a string[] split on whitespace by the command
   // dispatcher (handleCommands.ts) — no manual parsing needed here.
   if (!args[0]) {
@@ -138,7 +150,7 @@ export async function execute({ api, event, args }: Execute) {
 
     case "top": {
       try {
-        const topUsers = await shoti.getTop();
+        const topUsers = await getShotiClient().getTop();
         // Fenced code block on purpose — the outgoing-message wrapper
         // (utils/wrapper.ts) auto-applies MarkdownV2 and escapes reserved
         // characters, but a ``` block is one of the spans it preserves
@@ -147,11 +159,16 @@ export async function execute({ api, event, args }: Execute) {
         // getting escaped into unreadable text.
         return api.sendMessage(
           event.chat.id,
-          "🏆 *Top users*\n\n```json\n" + JSON.stringify(topUsers, null, 2) + "\n```",
+          "🏆 *Top users*\n\n```json\n" +
+            JSON.stringify(topUsers, null, 2) +
+            "\n```",
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        api.sendMessage(event.chat.id, "❌ Failed to fetch top users: " + message);
+        api.sendMessage(
+          event.chat.id,
+          "❌ Failed to fetch top users: " + message,
+        );
         return false;
       }
     }
@@ -159,7 +176,7 @@ export async function execute({ api, event, args }: Execute) {
     default: {
       await api.sendMessage(event.chat.id, "⏳ Fetching video...");
       try {
-        const result = await shoti.getShoti({ type: "video" });
+        const result = await getShotiClient().getShoti({ type: "video" });
 
         // getShoti() can resolve to `{ error, code }` instead of throwing
         // on failure — accessing `.user`/`.content` on that shape used to
@@ -185,9 +202,34 @@ export async function execute({ api, event, args }: Execute) {
   }
 }
 
+// Thin wrapper around dispatch() — the actual command logic. This is what
+// gets exported and is what handleCommands.ts calls. Its only job is to
+// guarantee /shoticron always produces a visible reply: dispatch() already
+// catches known failure points (top, default, pushOne), but this outer
+// catch is the backstop for anything else, including getShotiClient()
+// throwing on its very first call (e.g. an invalid SHOTI_APIKEY). Without
+// this, an uncaught error here would just be a server-side console.error
+// with nothing sent to the chat — see handleCommands.ts's importCommand,
+// which only logs (and never messages the user) when a command's own code
+// throws after loading successfully.
+export async function execute(ctx: Execute) {
+  try {
+    return await dispatch(ctx);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[shoticron]", message);
+    try {
+      await ctx.api.sendMessage(ctx.event.chat.id, `❌ ERROR: ${message}`);
+    } catch (sendError) {
+      console.error("[shoticron] failed to report error to chat:", sendError);
+    }
+    return false;
+  }
+}
+
 async function pushOne(api: TelegramBot, event: Message) {
   try {
-    const result = await shoti.getShoti({ type: "video" });
+    const result = await getShotiClient().getShoti({ type: "video" });
 
     if ("error" in result) {
       throw new Error(result.error);
@@ -217,6 +259,6 @@ async function pushOne(api: TelegramBot, event: Message) {
     failed++;
     const message = e instanceof Error ? e.message : String(e);
     lastErr[event.chat.id] = message;
-    console.error("[shoticron]", message);
+    console.error("[shoticron]:", message);
   }
 }
