@@ -295,3 +295,175 @@ export async function getLevelReward(level: number): Promise<LevelReward | undef
   if (!rows.length) return undefined;
   return { reward_coins: Number(rows[0].reward_coins), message: rows[0].message };
 }
+
+// ---------------------------------------------------------------------------
+// web_users — dashboard accounts (see sql/migrations/0003_web_multiuser.sql)
+// ---------------------------------------------------------------------------
+
+export type WebUser = { id: number; email: string; password_hash: string };
+
+export async function createWebUser(
+  email: string,
+  passwordHash: string,
+): Promise<WebUser> {
+  const { rows } = await pool.query(
+    `INSERT INTO web_users (email, password_hash) VALUES ($1, $2)
+     RETURNING id, email, password_hash`,
+    [email, passwordHash],
+  );
+  return rows[0] as WebUser;
+}
+
+export async function getWebUserByEmail(email: string): Promise<WebUser | undefined> {
+  const { rows } = await pool.query(
+    `SELECT id, email, password_hash FROM web_users WHERE lower(email) = lower($1)`,
+    [email],
+  );
+  return rows[0] as WebUser | undefined;
+}
+
+export async function getWebUserById(id: number): Promise<WebUser | undefined> {
+  const { rows } = await pool.query(
+    `SELECT id, email, password_hash FROM web_users WHERE id = $1`,
+    [id],
+  );
+  return rows[0] as WebUser | undefined;
+}
+
+// ---------------------------------------------------------------------------
+// bot_instances — one row per Telegram bot token a dashboard user added
+// ---------------------------------------------------------------------------
+
+export type BotInstanceStatus = "stopped" | "starting" | "running" | "error";
+
+export type BotInstance = {
+  id: number;
+  web_user_id: number;
+  label: string;
+  token_ciphertext: string;
+  token_iv: string;
+  token_tag: string;
+  token_last6: string;
+  enabled: boolean;
+  status: BotInstanceStatus;
+  last_error: string | null;
+  bot_username: string | null;
+  created_at: Date;
+};
+
+const BOT_INSTANCE_COLUMNS = `id, web_user_id, label, token_ciphertext, token_iv, token_tag,
+   token_last6, enabled, status, last_error, bot_username, created_at`;
+
+export async function createBotInstance(input: {
+  webUserId: number;
+  label: string;
+  tokenCiphertext: string;
+  tokenIv: string;
+  tokenTag: string;
+  tokenLast6: string;
+}): Promise<BotInstance> {
+  const { rows } = await pool.query(
+    `INSERT INTO bot_instances
+       (web_user_id, label, token_ciphertext, token_iv, token_tag, token_last6)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING ${BOT_INSTANCE_COLUMNS}`,
+    [
+      input.webUserId,
+      input.label,
+      input.tokenCiphertext,
+      input.tokenIv,
+      input.tokenTag,
+      input.tokenLast6,
+    ],
+  );
+  return rows[0] as BotInstance;
+}
+
+export async function listBotInstancesForUser(webUserId: number): Promise<BotInstance[]> {
+  const { rows } = await pool.query(
+    `SELECT ${BOT_INSTANCE_COLUMNS} FROM bot_instances WHERE web_user_id = $1 ORDER BY created_at ASC`,
+    [webUserId],
+  );
+  return rows as BotInstance[];
+}
+
+/** Every instance with enabled = TRUE, across all users — used at boot to know what to start. */
+export async function listEnabledBotInstances(): Promise<BotInstance[]> {
+  const { rows } = await pool.query(
+    `SELECT ${BOT_INSTANCE_COLUMNS} FROM bot_instances WHERE enabled = TRUE`,
+  );
+  return rows as BotInstance[];
+}
+
+export async function getBotInstance(id: number): Promise<BotInstance | undefined> {
+  const { rows } = await pool.query(
+    `SELECT ${BOT_INSTANCE_COLUMNS} FROM bot_instances WHERE id = $1`,
+    [id],
+  );
+  return rows[0] as BotInstance | undefined;
+}
+
+/** Scoped to a specific owner so one dashboard user can't operate on another's bot by guessing an id. */
+export async function getBotInstanceForUser(
+  id: number,
+  webUserId: number,
+): Promise<BotInstance | undefined> {
+  const { rows } = await pool.query(
+    `SELECT ${BOT_INSTANCE_COLUMNS} FROM bot_instances WHERE id = $1 AND web_user_id = $2`,
+    [id, webUserId],
+  );
+  return rows[0] as BotInstance | undefined;
+}
+
+export async function setBotInstanceEnabled(id: number, enabled: boolean): Promise<void> {
+  await pool.query(`UPDATE bot_instances SET enabled = $2 WHERE id = $1`, [id, enabled]);
+}
+
+export async function setBotInstanceStatus(
+  id: number,
+  status: BotInstanceStatus,
+  lastError?: string | null,
+  botUsername?: string | null,
+): Promise<void> {
+  await pool.query(
+    `UPDATE bot_instances
+     SET status = $2,
+         last_error = $3,
+         bot_username = COALESCE($4, bot_username)
+     WHERE id = $1`,
+    [id, status, lastError ?? null, botUsername ?? null],
+  );
+}
+
+export async function deleteBotInstance(id: number): Promise<void> {
+  await pool.query(`DELETE FROM bot_instances WHERE id = $1`, [id]);
+}
+
+// ---------------------------------------------------------------------------
+// bot_instance_settings — per-tenant equivalent of bot_settings (prefix,
+// developer mode, admin Telegram ids...)
+// ---------------------------------------------------------------------------
+
+export async function getInstanceSetting(
+  instanceId: number,
+  key: string,
+): Promise<string | undefined> {
+  const { rows } = await pool.query(
+    `SELECT value FROM bot_instance_settings WHERE bot_instance_id = $1 AND key = $2`,
+    [instanceId, key],
+  );
+  return rows.length ? (rows[0].value as string) : undefined;
+}
+
+export async function setInstanceSetting(
+  instanceId: number,
+  key: string,
+  value: string,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO bot_instance_settings (bot_instance_id, key, value)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (bot_instance_id, key) DO UPDATE SET value = EXCLUDED.value`,
+    [instanceId, key, value],
+  );
+}

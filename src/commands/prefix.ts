@@ -1,6 +1,6 @@
 import { Config, Execute } from "@/types";
 import { getPrefix } from "@/utils/getPrefix";
-import { setBotSetting } from "@/lib/db";
+import { setBotSetting, setInstanceSetting } from "@/lib/db";
 
 export const config: Config = {
   name: "prefix",
@@ -73,9 +73,15 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
   chatbotConfig.prefix = newPrefix;
 
   try {
-    // Persisted so a restart picks it back up via the bot_settings lookup
-    // in src/index.ts, instead of reverting to DEFAULT_PREFIX.
-    await setBotSetting("prefix", newPrefix);
+    // Persisted so a restart picks it back up (see buildInstanceConfig in
+    // src/bot/manager.ts), instead of reverting to DEFAULT_PREFIX. Scoped
+    // to this tenant's instanceId — under the multi-user dashboard, each
+    // bot has its own prefix, not one shared value.
+    if (chatbotConfig.instanceId !== undefined) {
+      await setInstanceSetting(chatbotConfig.instanceId, "prefix", newPrefix);
+    } else {
+      await setBotSetting("prefix", newPrefix);
+    }
   } catch (error) {
     console.error("Failed to persist new prefix:", error);
     await api.sendMessage(

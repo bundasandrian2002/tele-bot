@@ -1,5 +1,5 @@
 import { Config, Execute } from "@/types";
-import { setBotSetting } from "@/lib/db";
+import { setBotSetting, setInstanceSetting } from "@/lib/db";
 
 export const config: Config = {
   name: "developer",
@@ -65,8 +65,17 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
 
   try {
     // Persisted so a restart doesn't silently drop back to OFF — loaded
-    // back in src/index.ts on startup, same pattern as the saved prefix.
-    await setBotSetting("developer_mode", next ? "true" : "false");
+    // back by buildInstanceConfig in src/bot/manager.ts, same pattern as
+    // the saved prefix, scoped to this tenant's instanceId.
+    if (chatbotConfig.instanceId !== undefined) {
+      await setInstanceSetting(
+        chatbotConfig.instanceId,
+        "developer_mode",
+        next ? "true" : "false",
+      );
+    } else {
+      await setBotSetting("developer_mode", next ? "true" : "false");
+    }
   } catch (error) {
     console.error("Failed to persist developer mode:", error);
     await api.sendMessage(
