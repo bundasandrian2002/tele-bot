@@ -7,7 +7,7 @@ export const config: Config = {
   name: "shoticron",
   description:
     "Automatically generate a random video from TikTok on a recurring interval.",
-  usage: "/shoticron <on|off|status|setinterval|interval|reset>",
+  usage: "/shoticron [on/off | status | setinterval | interval | reset]",
   permission: "admin",
   creator: "libyzxy0",
 };
@@ -122,7 +122,10 @@ async function dispatch({ api, event, args }: Execute) {
 
     case "off":
       if (!state[threadID]) {
-        return api.sendMessage(event.chat.id, "ℹ️ Auto-Shoti Mode is currently off.");
+        return api.sendMessage(
+          event.chat.id,
+          "ℹ️ Auto-Shoti Mode is currently off.",
+        );
       }
       state[threadID] = false;
       return api.sendMessage(event.chat.id, "⛔ Auto-Shoti Disabled.");

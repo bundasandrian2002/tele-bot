@@ -4,7 +4,7 @@ import TelegramBot from "node-telegram-bot-api";
 // it again, so anything that takes longer than that needs the chat
 // action re-sent on an interval to keep it visibly "on" for the whole
 // duration of the work — not a single fire-and-forget call.
-const TYPING_REFRESH_MS = 1_000;
+const TYPING_REFRESH_MS = 5_000;
 
 /**
  * Starts a "typing…" indicator for the given chat that keeps refreshing
