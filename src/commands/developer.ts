@@ -8,34 +8,43 @@ export const config: Config = {
     "user-facing features (autodl, autogreet, the AI agent, rankup) — everyone else is " +
     "turned away with a clear message. Moderation/membership events (autokick, join, " +
     "leave) keep running regardless.",
-  usage: "/developer [on|off]",
+  usage: "/developer [on|off|status]",
   permission: "admin",
   creator: "itsunknown",
 };
 
 export async function execute({ api, event, args, chatbotConfig }: Execute) {
+  const sendStatus = () =>
+    api.sendMessage(
+      event.chat.id,
+      `*Developer Status:* developer mode is currently ${
+        chatbotConfig.developerMode ? "enabled" : "disabled"
+      }.`,
+    );
+
   // No args: report current status rather than guessing an action.
   if (!args.length) {
-    await api.sendMessage(
-      event.chat.id,
-      chatbotConfig.developerMode
-        ? "🔒 *Developer Mode is currently ON!* \n\nOnly admins can use the bot."
-        : "🔓 *Developer Mode is currently OFF!* \n\nEveryone can use the bot.",
-    );
+    await sendStatus();
     return;
   }
 
   const arg = args[0].toLowerCase();
   let next: boolean;
 
-  if (arg === "on") {
+  if (arg === "status") {
+    await sendStatus();
+    return;
+  } else if (arg === "on") {
     next = true;
   } else if (arg === "off") {
     next = false;
   } else if (arg === "toggle") {
     next = !chatbotConfig.developerMode;
   } else {
-    await api.sendMessage(event.chat.id, "❌ Usage: `/developer on`, `/developer off`, or just `/developer` to check status.");
+    await api.sendMessage(
+      event.chat.id,
+      "❌ Usage: `/developer on`, `/developer off`, `/developer status`.",
+    );
     return false;
   }
 
