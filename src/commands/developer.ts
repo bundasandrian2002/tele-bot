@@ -17,7 +17,7 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
   const sendStatus = () =>
     api.sendMessage(
       event.chat.id,
-      `*Developer Mode:* is currently ${
+      `*Developer Status:* Developer Mode is currently ${
         chatbotConfig.developerMode ? "enabled" : "disabled"
       }.`,
     );
