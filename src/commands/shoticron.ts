@@ -76,7 +76,7 @@ async function dispatch({ api, event, args }: Execute) {
       if (isNaN(ms)) {
         return api.sendMessage(
           event.chat.id,
-          "⛔ Invalid unit. Use 'minutes' or 'hours'.",
+          "⛔ Invalid unit! Use 'minutes' or 'hours'.",
         );
       }
 
@@ -104,7 +104,7 @@ async function dispatch({ api, event, args }: Execute) {
 
       await api.sendMessage(
         event.chat.id,
-        `✅ Auto-shoti enabled. Sending every ${minutes} minute(s).`,
+        `✅ Auto-Shoti Enabled! Sending every ${minutes} minute(s).`,
       );
 
       await pushOne(api, event);
@@ -122,10 +122,10 @@ async function dispatch({ api, event, args }: Execute) {
 
     case "off":
       if (!state[threadID]) {
-        return api.sendMessage(event.chat.id, "ℹ️ Auto mode is already off.");
+        return api.sendMessage(event.chat.id, "ℹ️ Auto-Shoti Mode is currently off.");
       }
       state[threadID] = false;
-      return api.sendMessage(event.chat.id, "⛔ Auto-shoti disabled.");
+      return api.sendMessage(event.chat.id, "⛔ Auto-Shoti Disabled.");
 
     case "status": {
       const running = state[threadID] ? "ON" : "OFF";
@@ -137,7 +137,7 @@ async function dispatch({ api, event, args }: Execute) {
       return api.sendMessage(
         event.chat.id,
         `📊 Auto-Shoti Status: ${running}\n` +
-          `✅ Videos sent: ${sent}\n` +
+          `✅ Sucess: ${sent}\n` +
           `❌ Errors: ${failed}\n` +
           `⏱ Interval: ${minutes} minutes\n${error}`,
       );
@@ -279,7 +279,7 @@ async function pushOne(api: TelegramBot, event: Message) {
     try {
       await api.sendMessage(
         event.chat.id,
-        `❌ Auto-shoti send failed: ${message}`,
+        `❌ Auto-Shoti send failed: ${message}`,
       );
     } catch (sendError) {
       console.error("[shoticron] failed to report error to chat:", sendError);
