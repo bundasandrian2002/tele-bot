@@ -7,15 +7,8 @@
  * triggered by an incoming Telegram update the way every other event file
  * is (handleEvents.ts only wires up bot.on(trigger) listeners) — it's a
  * self-driven polling loop, started once from index.ts via
- * startAutoGreetScheduler().
- *
- * NOT currently wired up by src/bot/manager.ts. getActiveGroups() reads
- * every row in the `groups` table with no bot_instance_id filter — under
- * the multi-user dashboard, that table is shared by every tenant's bot,
- * so calling this per-instance would broadcast one user's bot into every
- * other tenant's Telegram groups. Re-enable only after scoping `groups`
- * (and really `users`/`user_wallets`/`user_levels` too — none of them
- * carry a bot_instance_id yet) to the owning instance.
+ * startAutoGreetScheduler(), same idea as keep_alive.ts's express server
+ * being started as a side effect at boot.
  */
 import TelegramBot from "node-telegram-bot-api";
 import { getActiveGroups, getBotSetting, setBotSetting } from "@/lib/db";

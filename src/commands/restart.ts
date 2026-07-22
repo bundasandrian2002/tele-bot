@@ -1,37 +1,37 @@
 import { Config, Execute } from "@/types";
-import { getBotInstance } from "@/lib/db";
-import { botManager } from "@/bot/manager";
+import { setBotSetting } from "@/lib/db";
 
 export const config: Config = {
   name: "restart",
   description:
-    "Reconnects this bot to Telegram (drops and re-opens its polling connection). " +
-    "Under the multi-user dashboard this only restarts your own bot, not anyone else's.",
+    "Restarts the bot process and confirms success once it's back online. Requires the host (Docker, PM2, systemd, Railway, etc.) to auto-restart on exit — this command only asks the process to stop.",
   usage: "/restart",
   permission: "admin",
   creator: "itsunknown",
 };
 
-export async function execute({ api, event, chatbotConfig }: Execute) {
-  if (chatbotConfig.instanceId === undefined) {
-    await api.sendMessage(
-      event.chat.id,
-      "❌ This bot isn't running under the multi-user manager, so it doesn't know how to restart itself safely.",
-    );
-    return false;
-  }
+export async function execute({ api, event }: Execute) {
+  const sentMessage = await api.sendMessage(event.chat.id, "🔄 Restarting...");
 
-  const instance = await getBotInstance(chatbotConfig.instanceId);
-  if (!instance) {
-    await api.sendMessage(event.chat.id, "❌ Couldn't find this bot's instance record.");
-    return false;
-  }
+  // Recorded so the *next* process — which has no memory of this one —
+  // knows where to send the "back online" confirmation. Read once and
+  // cleared on startup in src/index.ts; storing message_id lets it edit
+  // this same "Restarting..." message into the confirmation instead of
+  // sending a second one.
+  await setBotSetting(
+    "pending_restart",
+    JSON.stringify({ chatId: event.chat.id, messageId: sentMessage.message_id }),
+  );
 
-  await api.sendMessage(event.chat.id, "🔄 Restarting this bot's connection...");
-
-  setTimeout(() => {
-    botManager.restart(instance).catch((error) => {
-      console.error(`[restart] Failed to restart instance ${instance.id}:`, error);
-    });
-  }, 500);
+  // Exiting is the only part this command controls — whatever actually
+  // brings the process back up (Docker/PM2/systemd restart policy, the
+  // hosting platform, etc.) lives outside this codebase. Without one of
+  // those in place, this just stops the bot and the confirmation above
+  // will never be read.
+  //
+  // Delayed slightly so the "Restarting..." message and its 🔥 reaction
+  // (added by runCommand in utils/handleCommands.ts right after this
+  // resolves) have time to actually reach Telegram before the process
+  // dies mid-request.
+  setTimeout(() => process.exit(0), 500);
 }

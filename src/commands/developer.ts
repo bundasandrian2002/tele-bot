@@ -1,5 +1,5 @@
 import { Config, Execute } from "@/types";
-import { setBotSetting, setInstanceSetting } from "@/lib/db";
+import { setBotSetting } from "@/lib/db";
 
 export const config: Config = {
   name: "developer",
@@ -8,43 +8,34 @@ export const config: Config = {
     "user-facing features (autodl, autogreet, the AI agent, rankup) — everyone else is " +
     "turned away with a clear message. Moderation/membership events (autokick, join, " +
     "leave) keep running regardless.",
-  usage: "/developer [on|off|status]",
+  usage: "/developer [on|off]",
   permission: "admin",
   creator: "itsunknown",
 };
 
 export async function execute({ api, event, args, chatbotConfig }: Execute) {
-  const sendStatus = () =>
-    api.sendMessage(
-      event.chat.id,
-      `*Developer Status:* Developer Mode is currently ${
-        chatbotConfig.developerMode ? "enabled" : "disabled"
-      }.`,
-    );
-
   // No args: report current status rather than guessing an action.
   if (!args.length) {
-    await sendStatus();
+    await api.sendMessage(
+      event.chat.id,
+      chatbotConfig.developerMode
+        ? "🔒 *Developer Mode is currently ON!* \n\nOnly admins can use the bot."
+        : "🔓 *Developer Mode is currently OFF!* \n\nEveryone can use the bot.",
+    );
     return;
   }
 
   const arg = args[0].toLowerCase();
   let next: boolean;
 
-  if (arg === "status") {
-    await sendStatus();
-    return;
-  } else if (arg === "on") {
+  if (arg === "on") {
     next = true;
   } else if (arg === "off") {
     next = false;
   } else if (arg === "toggle") {
     next = !chatbotConfig.developerMode;
   } else {
-    await api.sendMessage(
-      event.chat.id,
-      "❌ Usage: `/developer on`, `/developer off`, `/developer status`.",
-    );
+    await api.sendMessage(event.chat.id, "❌ Usage: `/developer on`, `/developer off`, or just `/developer` to check status.");
     return false;
   }
 
@@ -65,17 +56,8 @@ export async function execute({ api, event, args, chatbotConfig }: Execute) {
 
   try {
     // Persisted so a restart doesn't silently drop back to OFF — loaded
-    // back by buildInstanceConfig in src/bot/manager.ts, same pattern as
-    // the saved prefix, scoped to this tenant's instanceId.
-    if (chatbotConfig.instanceId !== undefined) {
-      await setInstanceSetting(
-        chatbotConfig.instanceId,
-        "developer_mode",
-        next ? "true" : "false",
-      );
-    } else {
-      await setBotSetting("developer_mode", next ? "true" : "false");
-    }
+    // back in src/index.ts on startup, same pattern as the saved prefix.
+    await setBotSetting("developer_mode", next ? "true" : "false");
   } catch (error) {
     console.error("Failed to persist developer mode:", error);
     await api.sendMessage(

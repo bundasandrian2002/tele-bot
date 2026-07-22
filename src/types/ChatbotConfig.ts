@@ -11,10 +11,4 @@ export type ChatbotConfig = {
   // /developer (src/commands/developer.ts) and persisted to bot_settings so
   // it survives a restart, same as prefix. Defaults to false.
   developerMode?: boolean;
-  // bot_instances.id for bots running under the multi-user web dashboard
-  // (see src/bot/manager.ts). Lets commands like /prefix and /developer
-  // persist their setting scoped to this tenant instead of a shared
-  // global key. Undefined for any code path not going through the
-  // manager (there isn't one anymore, but commands still guard for it).
-  instanceId?: number;
 };
