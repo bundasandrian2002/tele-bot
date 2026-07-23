@@ -172,7 +172,7 @@ export function renderDashboard(
     "Dashboard",
     `
     <h1>Your bots</h1>
-    <p class="sub">Each bot runs on its own Telegram token, polled independently.</p>
+    <p class="sub">Each bot runs on its own Telegram Token, polled independently.</p>
     ${flash ? `<div class="flash">${escapeHtml(flash)}</div>` : ""}
     ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
     <div class="card">${list}</div>
@@ -181,7 +181,7 @@ export function renderDashboard(
     <p class="sub">
       Create a bot with <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>
       and paste its token below. Your Telegram numeric user id (from
-      <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a>) as an admin
+      <a href="https://t.me/attachitsataporn_bot" target="_blank" rel="noopener">@attachitsataporn</a>) as an admin
       lets you use admin-only commands like <code>/prefix</code>.
     </p>
     <form class="card" method="post" action="/bots">
