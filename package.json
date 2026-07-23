@@ -7,7 +7,7 @@
   "author": "libyzxy0",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "start": "npm run db:migrate && tsx src/index.ts",
+    "start": "npm start db:migrate",
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/scripts/migrate.ts"
   },
