@@ -82,7 +82,7 @@ function layout(title: string, body: string, nav?: string): string {
 
 function loggedInNav(email: string): string {
   return `<nav>
-    <div class="brand">🤖 Bot Dashboard</div>
+    <div class="brand">Dashboard</div>
     <div class="row" style="align-items:center;">
       <span class="meta">${escapeHtml(email)}</span>
       <form method="post" action="/logout" style="margin:0;">
@@ -97,7 +97,7 @@ export function renderLogin(error?: string): string {
     "Log in",
     `
     <h1>Log in</h1>
-    <p class="sub">Manage your Telegram bot tokens.</p>
+    <p class="sub">Manage your Telegram Bot.</p>
     ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
     <form class="card" method="post" action="/login">
       <label>Email</label>
@@ -116,7 +116,7 @@ export function renderSignup(error?: string): string {
     "Sign up",
     `
     <h1>Create an account</h1>
-    <p class="sub">One account can manage several bot tokens.</p>
+    <p class="sub">One account can manage several bots.</p>
     ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
     <form class="card" method="post" action="/signup">
       <label>Email</label>
@@ -185,9 +185,9 @@ export function renderDashboard(
       lets you use admin-only commands like <code>/prefix</code>.
     </p>
     <form class="card" method="post" action="/bots">
-      <label>Label</label>
-      <input type="text" name="label" placeholder="My bot" required />
-      <label>Bot token</label>
+      <label>Info</label>
+      <input type="text" name="label" placeholder="e.g attachitsataporn" required />
+      <label>Bot Token</label>
       <input type="text" name="token" placeholder="123456789:AA..." required autocomplete="off" />
       <label>Admin Telegram ID(s), comma-separated</label>
       <input type="text" name="admins" placeholder="e.g. 123456789" />
@@ -205,15 +205,15 @@ export function renderInstanceSettings(
   flash?: string,
 ): string {
   return layout(
-    "Bot settings",
+    "Bot Settings",
     `
     <h1>${escapeHtml(instance.label)} settings</h1>
     <p class="sub">${statusBadge(instance)} ${instance.bot_username ? `&middot; @${escapeHtml(instance.bot_username)}` : ""}</p>
     ${flash ? `<div class="flash">${escapeHtml(flash)}</div>` : ""}
     <form class="card" method="post" action="/bots/${instance.id}/settings">
-      <label>Command prefix</label>
+      <label>Command Prefix</label>
       <input type="text" name="prefix" value="${escapeHtml(settings.prefix)}" maxlength="5" required />
-      <label>Bot name (used for passive "hey &lt;name&gt;" AI triggers)</label>
+      <label>Bot Name (used for passive "hey &lt;name&gt;" AI Triggers)</label>
       <input type="text" name="botname" value="${escapeHtml(settings.botname)}" />
       <label>Admin Telegram ID(s), comma-separated</label>
       <input type="text" name="admins" value="${escapeHtml(settings.admins)}" />
