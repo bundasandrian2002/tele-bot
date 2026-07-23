@@ -171,7 +171,7 @@ export function renderDashboard(
   return layout(
     "Dashboard",
     `
-    <h1>Your bots</h1>
+    <h1>My bots</h1>
     <p class="sub">Each bot runs on its own Telegram Token, polled independently.</p>
     ${flash ? `<div class="flash">${escapeHtml(flash)}</div>` : ""}
     ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
@@ -186,7 +186,7 @@ export function renderDashboard(
     </p>
     <form class="card" method="post" action="/bots">
       <label>Info</label>
-      <input type="text" name="label" placeholder="e.g attachitsataporn" required />
+      <input type="text" name="label" placeholder="e.g. attachitsataporn" required />
       <label>Bot Token</label>
       <input type="text" name="token" placeholder="123456789:AA..." required autocomplete="off" />
       <label>Admin Telegram ID(s), comma-separated</label>
